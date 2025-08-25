@@ -16,7 +16,7 @@
 @!namespace("@ohos.batteryStatistics", "batteryStats")
 
 @!sts_inject("""
-static { loadLibrary("batterystats_taihe_native.z") }""")
+static { loadLibraryWithPermissionCheck("batterystats_taihe_native.z", "@ohos.batteryStatistics") }""")
 
 enum ConsumptionType: i32 {
   CONSUMPTION_TYPE_INVALID = -17,
