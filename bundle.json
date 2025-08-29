@@ -36,7 +36,6 @@
                 "cJSON",
                 "c_utils",
                 "display_manager",
-                "eventhandler",
                 "hicollie",
                 "hisysevent",
                 "hilog",
@@ -95,4 +94,3 @@
         }
     }
 }
-

@@ -15,9 +15,7 @@
 
 #include "stats_service_subscriber_test.h"
 #include "stats_log.h"
-#ifdef HAS_BATTERYSTATS_CALL_MANAGER_PART
 #include <call_manager_inner_type.h>
-#endif
 #include <hisysevent.h>
 
 #include "battery_stats_listener.h"
@@ -35,9 +33,7 @@ using namespace OHOS::AAFwk;
 using namespace OHOS::EventFwk;
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::PowerMgr;
-#ifdef HAS_BATTERYSTATS_CALL_MANAGER_PART
 using namespace OHOS::Telephony;
-#endif
 using namespace std;
 using namespace testing::ext;
 
