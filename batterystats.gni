@@ -12,11 +12,11 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-defines = []
+
 if (!defined(global_parts_info) ||
     defined(global_parts_info.communication_bluetooth)) {
   has_batterystats_bluetooth_part = true
-  defines += [ "HAS_BATTERYSTATS_BLUETOOTH_PART" ]
+  cflags_cc = [ "-DHAS_BATTERYSTATS_BLUETOOTH_PART" ]
 } else {
   has_batterystats_bluetooth_part = false
 }
@@ -24,7 +24,7 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.communication_wifi)) {
   has_batterystats_wifi_part = true
-  defines += [ "HAS_BATTERYSTATS_WIFI_PART" ]
+  cflags_cc += [ "-DHAS_BATTERYSTATS_WIFI_PART" ]
 } else {
   has_batterystats_wifi_part = false
 }
@@ -32,7 +32,7 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.powermgr_display_manager)) {
   has_batterystats_display_manager_part = true
-  defines += [ "HAS_BATTERYSTATS_DISPLAY_MANAGER_PART" ]
+  cflags_cc += [ "-DHAS_BATTERYSTATS_DISPLAY_MANAGER_PART" ]
 } else {
   has_batterystats_display_manager_part = false
 }
@@ -40,16 +40,9 @@ if (!defined(global_parts_info) ||
 if (!defined(global_parts_info) ||
     defined(global_parts_info.telephony_call_manager)) {
   has_batterystats_call_manager_part = true
-  defines += [ "HAS_BATTERYSTATS_CALL_MANAGER_PART" ]
+  cflags_cc += [ "-DHAS_BATTERYSTATS_CALL_MANAGER_PART" ]
 } else {
   has_batterystats_call_manager_part = false
-}
-
-if (!defined(global_parts_info) ||
-    defined(global_parts_info.customization_config_policy)) {
-  has_batterystats_config_policy_part = true
-} else {
-  has_batterystats_config_policy_part = false
 }
 
 ability_runtime_path = "//foundation/ability/ability_runtime"

@@ -149,7 +149,7 @@ ohos_shared_library("batterystats_service") {
     "cJSON:cjson",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
-    "eventhandler:libeventhandler",
+    "config_policy:configpolicy_util",
     "hicollie:libhicollie",
     "hilog:libhilog",
     "hisysevent:libhisyseventmanager",
@@ -160,19 +160,12 @@ ohos_shared_library("batterystats_service") {
     "samgr:samgr_proxy",
   ]
 
-  defines = []
-
   if (has_batterystats_bluetooth_part) {
     external_deps += [ "bluetooth:btframework" ]
   }
 
   if (has_batterystats_call_manager_part) {
     external_deps += [ "call_manager:tel_call_manager_api" ]
-  }
-
-  if (has_batterystats_config_policy_part) {
-    defines += [ "HAS_BATTERYSTATS_CONFIG_POLICY_PART" ]
-    external_deps += [ "config_policy:configpolicy_util" ]
   }
 
   if (has_batterystats_display_manager_part) {

@@ -56,6 +56,8 @@ ohos_systemtest("batterystats_sys_test") {
     "ability_base:want",
     "ability_runtime:appkit_native",
     "battery_manager:batterysrv_client",
+    "bluetooth:btframework",
+    "call_manager:tel_call_manager_api",
     "cJSON:cjson",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
@@ -71,16 +73,8 @@ ohos_systemtest("batterystats_sys_test") {
     "power_manager:powermgr_client",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "wifi:wifi_sdk",
   ]
-  if (has_batterystats_bluetooth_part) {
-    external_deps += [ "bluetooth:btframework" ]
-  }
-  if (has_batterystats_wifi_part) {
-    external_deps += [ "wifi:wifi_sdk" ]
-  }
-  if (has_batterystats_call_manager_part) {
-    external_deps += [ "call_manager:tel_call_manager_api" ]
-  }
 }
 
 group("systemtest_batterystats") {

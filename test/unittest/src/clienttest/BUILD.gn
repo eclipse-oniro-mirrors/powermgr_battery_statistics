@@ -36,9 +36,10 @@ config("module_mock_private_config") {
 deps_ex = [
   "ability_base:base",
   "ability_base:want",
-  "cJSON:cjson",
+  "call_manager:tel_call_manager_api",
   "common_event_service:cesfwk_innerkits",
   "config_policy:configpolicy_util",
+  "cJSON:cjson",
   "c_utils:utils",
   "display_manager:displaymgr",
   "hisysevent:libhisysevent",
@@ -49,9 +50,6 @@ deps_ex = [
   "safwk:system_ability_fwk",
   "samgr:samgr_proxy",
 ]
-if (has_batterystats_call_manager_part) {
-  deps_ex += [ "call_manager:tel_call_manager_api" ]
-}
 
 ############################service_test#############################
 ohos_unittest("stats_service_test") {
@@ -100,7 +98,7 @@ ohos_unittest("stats_service_death_test") {
     "${batterystats_utils_path}:coverage_flags",
   ]
 
-  defines += [ "STATS_SERVICE_DEATH_UT" ]
+  defines = [ "STATS_SERVICE_DEATH_UT" ]
 
   deps = [
     "${batterystats_inner_api}:batterystats_client",
@@ -553,6 +551,7 @@ group("unittest") {
   deps = [
     ":stats_alarm_test",
     ":stats_audio_test",
+    ":stats_bluetooth_test",
     ":stats_camera_test",
     ":stats_client_test_mock_object",
     ":stats_client_test_mock_parcel",
@@ -560,20 +559,11 @@ group("unittest") {
     ":stats_display_test",
     ":stats_dump_test",
     ":stats_location_test",
+    ":stats_phone_test",
     ":stats_powermgr_test",
     ":stats_service_death_test",
     ":stats_service_test",
     ":stats_util_test",
+    ":stats_wifi_test",
   ]
-  if (has_batterystats_wifi_part) {
-    deps += [ ":stats_wifi_test" ]
-  }
-
-  if (has_batterystats_call_manager_part) {
-    deps += [ ":stats_phone_test" ]
-  }
-
-  if (has_batterystats_bluetooth_part) {
-    deps += [ ":stats_bluetooth_test" ]
-  }
 }
