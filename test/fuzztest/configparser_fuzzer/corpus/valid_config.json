@@ -1,0 +1,17 @@
+{
+  "cpu_cluster": 2.5,
+  "cpu_speed": [100.0, 200.0, 300.0],
+  "radio_on": 50.0,
+  "wifi_on": 31.55,
+  "bluetooth_on": 1.0,
+  "gps_on": 60.0,
+  "camera_on": 600.0,
+  "flashlight_on": 200.0,
+  "audio_on": 15.0,
+  "sensor_on": 4.0,
+  "screen_on": 100.0,
+  "screen_brightness": [50.0, 100.0, 150.0, 200.0, 250.0],
+  "cpu_awake": 3.0,
+  "alarm_on": 0.5,
+  "phone_active": 200.0
+}

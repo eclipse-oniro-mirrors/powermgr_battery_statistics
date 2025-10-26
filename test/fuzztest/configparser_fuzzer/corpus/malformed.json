@@ -1,0 +1,5 @@
+{
+  "cpu_cluster": "invalid",
+  "missing_bracket": [1, 2, 3
+  "wifi_on": null,
+  "nested": {"deep": {"value": 123}}
