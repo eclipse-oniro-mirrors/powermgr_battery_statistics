@@ -55,12 +55,9 @@ constexpr uint32_t TEST_DOMAIN_ID = 0xD000F00;
 
 enum BatteryStatsLogLabel {
     // Component labels, you can add if needed
-    COMP_APP = 0,
-    COMP_FWK = 1,
-    COMP_SVC = 2,
-    COMP_HDI = 3,
-    COMP_DRV = 4,
-    COMP_UTILS = 5,
+    COMP_FWK = 0,
+    COMP_SVC = 1,
+    COMP_UTILS = 2,
     // Test label
     LABEL_TEST,
     // The end of labels, max to the domain id range length 32
@@ -68,42 +65,51 @@ enum BatteryStatsLogLabel {
 };
 
 enum BatteryStatsLogDomain {
-    DOMAIN_APP = STATS_DOMAIN_ID_START + COMP_APP, // 0xD002960
-    DOMAIN_FRAMEWORK, // 0xD002961
-    DOMAIN_SERVICE, // 0xD002962
-    DOMAIN_HDI, // 0xD002963
-    DOMAIN_DRIVER, // 0xD002964
-    DOMAIN_UTILS, // 0xD002965
+    DOMAIN_SERVICE = STATS_DOMAIN_ID_START + COMP_SVC, // 0xD002961
     DOMAIN_TEST = TEST_DOMAIN_ID, // 0xD000F00
     DOMAIN_END = STATS_DOMAIN_ID_END, // Max to 0xD002980, keep the sequence and length same as BatteryStatsLogLabel
 };
 
-struct BatteryStatsLogLabelDomain {
-    uint32_t domainId;
+struct BatteryStatsLogLabelTag {
+    uint32_t logLabel;
     const char* tag;
 };
 
-// Keep the sequence and length same as BatteryStatsLogDomain
-static const BatteryStatsLogLabelDomain STATS_LABEL[LABEL_END] = {
-    {DOMAIN_APP,       "StatsApp"},
-    {DOMAIN_FRAMEWORK, "StatsFwk"},
-    {DOMAIN_SERVICE,   "StatsSvc"},
-    {DOMAIN_HDI,       "StatsHdi"},
-    {DOMAIN_DRIVER,    "StatsDrv"},
-    {DOMAIN_UTILS,     "StatsUtils"},
-    {DOMAIN_TEST,      "StatsTest"},
+// Keep the sequence same as BatteryStatsLogLabel
+static constexpr BatteryStatsLogLabelTag STATS_LABEL_TAG[LABEL_END] = {
+    {COMP_FWK,       "StatsFwk"},
+    {COMP_SVC,       "StatsSvc"},
+    {COMP_UTILS,     "StatsUtils"},
+    {DOMAIN_TEST,    "StatsTest"},
+};
+
+struct BatteryStatsLogLabelDomain {
+    uint32_t logLabel;
+    uint32_t domainId;
+};
+
+static constexpr BatteryStatsLogLabelDomain STATS_LABEL_DOMAIN[LABEL_END] = {
+    {COMP_FWK,              DOMAIN_SERVICE},
+    {COMP_SVC,              DOMAIN_SERVICE},
+    {COMP_UTILS,            DOMAIN_SERVICE},
+    {LABEL_TEST,            DOMAIN_SERVICE},
 };
 
 #define STATS_HILOGF(domain, ...) \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_FATAL, STATS_LABEL[domain].domainId, STATS_LABEL[domain].tag, ##__VA_ARGS__))
+    ((void)HILOG_IMPL(LOG_CORE, LOG_FATAL, STATS_LABEL_DOMAIN[domain].domainId, STATS_LABEL_TAG[domain].tag,   \
+    ##__VA_ARGS__))
 #define STATS_HILOGE(domain, ...) \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, STATS_LABEL[domain].domainId, STATS_LABEL[domain].tag, ##__VA_ARGS__))
+    ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, STATS_LABEL_DOMAIN[domain].domainId, STATS_LABEL_TAG[domain].tag,   \
+    ##__VA_ARGS__))
 #define STATS_HILOGW(domain, ...) \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_WARN, STATS_LABEL[domain].domainId, STATS_LABEL[domain].tag, ##__VA_ARGS__))
+    ((void)HILOG_IMPL(LOG_CORE, LOG_WARN, STATS_LABEL_DOMAIN[domain].domainId, STATS_LABEL_TAG[domain].tag,    \
+    ##__VA_ARGS__))
 #define STATS_HILOGI(domain, ...) \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_INFO, STATS_LABEL[domain].domainId, STATS_LABEL[domain].tag, ##__VA_ARGS__))
+    ((void)HILOG_IMPL(LOG_CORE, LOG_INFO, STATS_LABEL_DOMAIN[domain].domainId, STATS_LABEL_TAG[domain].tag,    \
+    ##__VA_ARGS__))
 #define STATS_HILOGD(domain, ...) \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, STATS_LABEL[domain].domainId, STATS_LABEL[domain].tag, ##__VA_ARGS__))
+    ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, STATS_LABEL_DOMAIN[domain].domainId, STATS_LABEL_TAG[domain].tag,   \
+    ##__VA_ARGS__))
 } // namespace PowerMgr
 } // namespace OHOS
 
