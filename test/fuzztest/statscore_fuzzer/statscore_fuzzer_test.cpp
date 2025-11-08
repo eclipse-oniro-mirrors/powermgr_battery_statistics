@@ -34,7 +34,7 @@ constexpr size_t AGGREGATION_BLOCK_BYTES = 8;
 constexpr size_t DEBUG_INFO_INPUT_BYTES = 16;
 constexpr size_t DEBUG_INFO_MAX_LENGTH = 64;
 
-void HandleEntityRetrieval(const OHOS::sptr<BatteryStatsCore>& core, const uint8_t* data, size_t size)
+void HandleEntityRetrieval(const std::shared_ptr<BatteryStatsCore>& core, const uint8_t* data, size_t size)
 {
     size_t offset = 0;
     while (offset < size) {
@@ -54,7 +54,7 @@ void HandleEntityRetrieval(const OHOS::sptr<BatteryStatsCore>& core, const uint8
     }
 }
 
-size_t HandleAggregationQueries(const OHOS::sptr<BatteryStatsCore>& core, const uint8_t* data, size_t size)
+size_t HandleAggregationQueries(const std::shared_ptr<BatteryStatsCore>& core, const uint8_t* data, size_t size)
 {
     size_t offset = 0;
     while (offset + AGGREGATION_BLOCK_BYTES <= size) {
