@@ -21,108 +21,119 @@
 #include "stats_utils.h"
 #include <cstdint>
 #include <cstddef>
+#include <algorithm>
 #include <vector>
 #include <string>
 
 using namespace OHOS::PowerMgr;
 
-namespace {
-    class StatsCoreFuzzer {
-    public:
-        StatsCoreFuzzer() {
-            service_ = BatteryStatsService::GetInstance();
-            service_->OnStart();
+namespace
+{
+constexpr size_t MIN_CORE_DATA_SIZE = 8;
+constexpr size_t UID_GUARD_BYTES = 4;
+constexpr size_t AGGREGATION_BLOCK_BYTES = 8;
+constexpr size_t DEBUG_INFO_INPUT_BYTES = 16;
+constexpr size_t DEBUG_INFO_MAX_LENGTH = 64;
+
+class StatsCoreFuzzer {
+public:
+    StatsCoreFuzzer()
+    {
+        service_ = BatteryStatsService::GetInstance();
+        service_->OnStart();
+    }
+
+    ~StatsCoreFuzzer()
+    {
+        if (service_ != nullptr) {
+            service_->OnStop();
+        }
+    }
+
+    void FuzzCoreOperations(const uint8_t* data, size_t size)
+    {
+        if (data == nullptr || size < MIN_CORE_DATA_SIZE) {
+            return;
         }
 
-        ~StatsCoreFuzzer() {
-            if (service_ != nullptr) {
-                service_->OnStop();
+        auto core = service_->GetBatteryStatsCore();
+        if (core == nullptr) {
+            return;
+        }
+
+        size_t offset = 0;
+
+        // Fuzz GetEntity operations
+        while (offset < size) {
+            uint8_t typeRaw = data[offset++];
+            auto type = static_cast<BatteryStatsInfo::ConsumptionType>(
+                typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
+
+            auto entity = core->GetEntity(type);
+            if (entity != nullptr) {
+                entity->Calculate();
+                (void)BatteryStatsEntity::GetStatsInfoList();
+            }
+
+            if (offset + UID_GUARD_BYTES > size) {
+                break;
             }
         }
 
-        void FuzzCoreOperations(const uint8_t* data, size_t size) {
-            if (data == nullptr || size < 8) {
-                return;
+        // Reset offset for different fuzzing
+        offset = 0;
+
+        // Fuzz aggregation queries
+        while (offset + AGGREGATION_BLOCK_BYTES <= size) {
+            int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
+            offset += sizeof(int32_t);
+
+            uint8_t typeRaw = data[offset++];
+            auto consumptionType = static_cast<BatteryStatsInfo::ConsumptionType>(
+                typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
+
+            // Test per-app queries
+            core->GetAppStatsMah(uid);
+            core->GetAppStatsPercent(uid);
+
+            // Test per-component queries
+            core->GetPartStatsMah(consumptionType);
+            core->GetPartStatsPercent(consumptionType);
+
+            // Test battery stats list
+            (void)core->GetBatteryStats();
+
+            if (offset + AGGREGATION_BLOCK_BYTES > size) {
+                break;
             }
-
-            auto core = service_->GetBatteryStatsCore();
-            if (core == nullptr) {
-                return;
-            }
-
-            size_t offset = 0;
-
-            // Fuzz GetEntity operations
-            while (offset + 1 <= size) {
-                uint8_t typeRaw = data[offset++];
-                auto type = static_cast<BatteryStatsInfo::ConsumptionType>(
-                    typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
-
-                auto entity = core->GetEntity(type);
-                if (entity != nullptr) {
-                    // Fuzz entity calculate
-                    entity->Calculate();
-
-                    // Get stats info list (static method)
-                    auto statsInfo = BatteryStatsEntity::GetStatsInfoList();
-                }
-
-                if (offset + 4 > size) break;
-            }
-
-            // Reset offset for different fuzzing
-            offset = 0;
-
-            // Fuzz aggregation queries
-            while (offset + 8 <= size) {
-                int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
-                offset += 4;
-
-                uint8_t typeRaw = data[offset++];
-                auto consumptionType = static_cast<BatteryStatsInfo::ConsumptionType>(
-                    typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
-
-                // Test per-app queries
-                core->GetAppStatsMah(uid);
-                core->GetAppStatsPercent(uid);
-
-                // Test per-component queries
-                core->GetPartStatsMah(consumptionType);
-                core->GetPartStatsPercent(consumptionType);
-
-                // Test battery stats list
-                auto statsList = core->GetBatteryStats();
-
-                if (offset + 8 > size) break;
-            }
-
-            // Fuzz save/load operations
-            core->SaveBatteryStatsData();
-            core->LoadBatteryStatsData();
-
-            // Fuzz dump operations
-            std::string dumpResult;
-            core->DumpInfo(dumpResult);
-
-            // Fuzz debug info
-            if (offset + 16 <= size) {
-                std::string debugInfo(reinterpret_cast<const char*>(&data[offset]),
-                                    std::min(size - offset, size_t(64)));
-                core->UpdateDebugInfo(debugInfo);
-
-                std::string getDebugResult;
-                core->GetDebugInfo(getDebugResult);
-            }
-
-            // Fuzz reset
-            core->Reset();
         }
 
-    private:
-        OHOS::sptr<BatteryStatsService> service_ = nullptr;
-    };
+        // Fuzz save/load operations
+        core->SaveBatteryStatsData();
+        core->LoadBatteryStatsData();
 
-    StatsCoreFuzzer g_fuzzer;
+        // Fuzz dump operations
+        std::string dumpResult;
+        core->DumpInfo(dumpResult);
+
+        // Fuzz debug info
+        if (offset + DEBUG_INFO_INPUT_BYTES <= size) {
+            size_t copyLen = std::min(DEBUG_INFO_MAX_LENGTH, size - offset);
+            std::string debugInfo(reinterpret_cast<const char*>(&data[offset]), copyLen);
+            core->UpdateDebugInfo(debugInfo);
+
+            std::string getDebugResult;
+            core->GetDebugInfo(getDebugResult);
+        }
+
+        core->Reset();
+    }
+
+private:
+    OHOS::sptr<BatteryStatsService> service_ = nullptr;
+};
+
+StatsCoreFuzzer g_fuzzer;
 }
 
 /* Fuzzer entry point */

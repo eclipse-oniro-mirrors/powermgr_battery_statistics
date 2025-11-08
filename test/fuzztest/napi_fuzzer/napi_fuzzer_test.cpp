@@ -21,93 +21,132 @@
 #include "battery_stats_info.h"
 #include <cstdint>
 #include <cstddef>
+#include <algorithm>
 #include <string>
+#include <vector>
 
 using namespace OHOS::PowerMgr;
 
-namespace {
-    void FuzzNapiUtilsAndError(const uint8_t* data, size_t size) {
-        if (data == nullptr || size < 4) {
-            return;
-        }
+namespace
+{
+constexpr size_t MIN_NAPI_DATA_SIZE = sizeof(int32_t);
+constexpr size_t CLIENT_BLOCK_BYTES = 8;
+constexpr size_t TOTALS_BLOCK_BYTES = 12;
+constexpr size_t DUMP_GUARD_BYTES = 8;
+constexpr size_t MAX_DUMP_ARG_MOD = 5;
+constexpr size_t MAX_DUMP_ARG_LENGTH = 16;
+constexpr uint8_t BATTERY_STATE_MASK = 0x01;
+constexpr int32_t STATS_TYPE_MOD = 32;
 
-        size_t offset = 0;
+void FuzzClientStats(const uint8_t* data, size_t size)
+{
+    size_t offset = 0;
+    auto& client = BatteryStatsClient::GetInstance();
 
-        // Fuzz BatteryStatsClient directly (tested via NAPI layer)
-        while (offset + 8 <= size) {
-            int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
-            offset += 4;
+    while (offset + CLIENT_BLOCK_BYTES <= size) {
+        int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
+        offset += sizeof(int32_t);
 
-            int32_t type = *reinterpret_cast<const int32_t*>(&data[offset]);
-            offset += 4;
+        int32_t type = *reinterpret_cast<const int32_t*>(&data[offset]);
+        offset += sizeof(int32_t);
 
-            auto& client = BatteryStatsClient::GetInstance();
+        client.GetAppStatsMah(uid);
+        client.GetAppStatsPercent(uid);
 
-            // Test various client methods
-            client.GetAppStatsMah(uid);
-            client.GetAppStatsPercent(uid);
+        auto consumptionType = static_cast<BatteryStatsInfo::ConsumptionType>(
+            type % static_cast<int32_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
 
-            auto consumptionType = static_cast<BatteryStatsInfo::ConsumptionType>(
-                type % static_cast<int32_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
+        client.GetPartStatsMah(consumptionType);
+        client.GetPartStatsPercent(consumptionType);
+        (void)client.GetBatteryStats();
 
-            client.GetPartStatsMah(consumptionType);
-            client.GetPartStatsPercent(consumptionType);
-
-            // Test stats list
-            auto statsList = client.GetBatteryStats();
-
-            if (offset + 8 > size) break;
-        }
-
-        // Fuzz GetTotalTimeSecond and GetTotalDataBytes
-        offset = 0;
-        while (offset + 12 <= size) {
-            int32_t statsTypeRaw = *reinterpret_cast<const int32_t*>(&data[offset]);
-            offset += 4;
-
-            int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
-            offset += 4;
-
-            auto& client = BatteryStatsClient::GetInstance();
-
-            auto statsType = static_cast<StatsUtils::StatsType>(statsTypeRaw % 32);
-
-            client.GetTotalTimeSecond(statsType, uid);
-            client.GetTotalDataBytes(statsType, uid);
-
-            if (offset + 8 > size) break;
-        }
-
-        // Fuzz Reset
-        auto& client = BatteryStatsClient::GetInstance();
-        client.Reset();
-
-        // Fuzz SetOnBattery
-        if (size > 0) {
-            bool onBattery = data[0] & 0x01;
-            client.SetOnBattery(onBattery);
-        }
-
-        // Fuzz Dump
-        if (offset + 8 <= size) {
-            std::vector<std::string> args;
-            size_t numArgs = (data[offset] % 5) + 1;
-            offset++;
-
-            for (size_t i = 0; i < numArgs && offset < size; i++) {
-                size_t argLen = std::min(size_t(data[offset] % 16), size - offset - 1);
-                offset++;
-
-                if (offset + argLen <= size) {
-                    std::string arg(reinterpret_cast<const char*>(&data[offset]), argLen);
-                    args.push_back(arg);
-                    offset += argLen;
-                }
-            }
-
-            client.Dump(args);
+        if (offset + DUMP_GUARD_BYTES > size) {
+            break;
         }
     }
+}
+
+size_t FuzzTotalTimeQueries(const uint8_t* data, size_t size)
+{
+    size_t offset = 0;
+    auto& client = BatteryStatsClient::GetInstance();
+
+    while (offset + TOTALS_BLOCK_BYTES <= size) {
+        int32_t statsTypeRaw = *reinterpret_cast<const int32_t*>(&data[offset]);
+        offset += sizeof(int32_t);
+
+        int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
+        offset += sizeof(int32_t);
+
+        auto statsType = static_cast<StatsUtils::StatsType>(statsTypeRaw % STATS_TYPE_MOD);
+
+        client.GetTotalTimeSecond(statsType, uid);
+        client.GetTotalDataBytes(statsType, uid);
+
+        if (offset + DUMP_GUARD_BYTES > size) {
+            break;
+        }
+    }
+
+    return offset;
+}
+
+void FuzzStateToggle(const uint8_t* data, size_t size)
+{
+    if (size == 0) {
+        return;
+    }
+
+    auto& client = BatteryStatsClient::GetInstance();
+    bool onBattery = (data[0] & BATTERY_STATE_MASK) != 0;
+    client.SetOnBattery(onBattery);
+}
+
+void FuzzDump(const uint8_t* data, size_t size, size_t offset)
+{
+    if (offset + DUMP_GUARD_BYTES > size) {
+        return;
+    }
+
+    auto& client = BatteryStatsClient::GetInstance();
+    std::vector<std::string> args;
+    size_t numArgs = (data[offset] % MAX_DUMP_ARG_MOD) + 1;
+    offset++;
+
+    for (size_t i = 0; i < numArgs && offset < size; i++) {
+        size_t remaining = size - offset;
+        if (remaining <= 1) {
+            break;
+        }
+
+        size_t argLen = std::min(static_cast<size_t>(data[offset] % MAX_DUMP_ARG_LENGTH), remaining - 1);
+        offset++;
+
+        if (offset + argLen <= size) {
+            std::string arg(reinterpret_cast<const char*>(&data[offset]), argLen);
+            args.push_back(arg);
+            offset += argLen;
+        }
+    }
+
+    client.Dump(args);
+}
+
+void FuzzNapiUtilsAndError(const uint8_t* data, size_t size)
+{
+    if (data == nullptr || size < MIN_NAPI_DATA_SIZE) {
+        return;
+    }
+
+    FuzzClientStats(data, size);
+    size_t totalsOffset = FuzzTotalTimeQueries(data, size);
+
+    auto& client = BatteryStatsClient::GetInstance();
+    client.Reset();
+
+    FuzzStateToggle(data, size);
+    FuzzDump(data, size, totalsOffset);
+}
 }
 
 /* Fuzzer entry point */

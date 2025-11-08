@@ -19,121 +19,153 @@
 #include "battery_stats_dumper.h"
 #include <cstdint>
 #include <cstddef>
+#include <algorithm>
 #include <string>
 #include <vector>
 
 using namespace OHOS::PowerMgr;
 
-namespace {
-    class ListenerFuzzer {
-    public:
-        ListenerFuzzer() {
-            service_ = BatteryStatsService::GetInstance();
-            service_->OnStart();
+namespace
+{
+constexpr size_t MIN_LISTENER_DATA_SIZE = sizeof(int32_t);
+constexpr size_t MAX_DUMPER_ARGS = 10;
+constexpr size_t PREDEFINED_ARG_SELECTOR = 2;
+constexpr size_t MAX_FUZZ_ARG_LENGTH = 32;
+constexpr size_t UID_BYTE_SIZE = sizeof(int32_t);
+constexpr size_t DEBUG_INFO_INPUT_REQUIREMENT = 16;
+constexpr size_t DEBUG_INFO_MAX_LENGTH = 64;
+constexpr uint8_t BATTERY_STATE_MASK = 0x01;
+
+class ListenerFuzzer {
+public:
+    ListenerFuzzer()
+    {
+        service_ = BatteryStatsService::GetInstance();
+        service_->OnStart();
+    }
+
+    ~ListenerFuzzer()
+    {
+        if (service_ != nullptr) {
+            service_->OnStop();
+        }
+    }
+
+    void FuzzListenerAndDumper(const uint8_t* data, size_t size)
+    {
+        if (data == nullptr || size < MIN_LISTENER_DATA_SIZE) {
+            return;
         }
 
-        ~ListenerFuzzer() {
-            if (service_ != nullptr) {
-                service_->OnStop();
-            }
+        size_t offset = 0;
+        auto args = GenerateDumpArgs(data, size, offset);
+
+        std::string result;
+        BatteryStatsDumper::Dump(args, result);
+
+        FuzzStateTransitions(data, size);
+        FuzzLifecycle(size);
+        FuzzDebugInfo(data, size, offset);
+    }
+
+private:
+    std::vector<std::string> GenerateDumpArgs(const uint8_t* data, size_t size, size_t& offset) const
+    {
+        std::vector<std::string> args;
+        if (offset >= size) {
+            return args;
         }
 
-        void FuzzListenerAndDumper(const uint8_t* data, size_t size) {
-            if (data == nullptr || size < 4) {
-                return;
+        static const std::vector<std::string> predefinedArgs = {
+            "-batterystats", "-u", "-a", "-p", "-r", "-reset", "-help", "-c", "-checkereset"
+        };
+
+        size_t numArgs = data[offset] % MAX_DUMPER_ARGS;
+        offset++;
+
+        for (size_t i = 0; i < numArgs && offset < size; i++) {
+            bool usePredefined = (data[offset] % PREDEFINED_ARG_SELECTOR == 0) && !predefinedArgs.empty();
+            if (usePredefined) {
+                args.push_back(predefinedArgs[data[offset] % predefinedArgs.size()]);
+                offset++;
+                continue;
             }
 
-            size_t offset = 0;
+            size_t remaining = size - offset;
+            if (remaining <= 1) {
+                break;
+            }
 
-            // Fuzz dumper with various argument combinations
-            // BatteryStatsDumper::Dump is a static method
-
-            // Generate fuzzed dump arguments
-            std::vector<std::string> args;
-            size_t numArgs = (data[offset] % 10);
+            size_t argLen = std::min(static_cast<size_t>(data[offset] % MAX_FUZZ_ARG_LENGTH), remaining - 1);
             offset++;
 
-            std::vector<std::string> predefinedArgs = {
-                "-batterystats",
-                "-u",
-                "-a",
-                "-p",
-                "-r",
-                "-reset",
-                "-help",
-                "-c",
-                "-checkereset"
-            };
-
-            for (size_t i = 0; i < numArgs && offset < size; i++) {
-                if (data[offset] % 2 == 0 && !predefinedArgs.empty()) {
-                    // Use predefined args
-                    args.push_back(predefinedArgs[data[offset] % predefinedArgs.size()]);
-                    offset++;
-                } else {
-                    // Use fuzzed args
-                    size_t argLen = std::min(size_t(data[offset] % 32), size - offset - 1);
-                    offset++;
-
-                    if (offset + argLen <= size) {
-                        std::string arg(reinterpret_cast<const char*>(&data[offset]), argLen);
-                        args.push_back(arg);
-                        offset += argLen;
-                    }
-                }
-            }
-
-            std::string result;
-            BatteryStatsDumper::Dump(args, result);
-
-            // Fuzz SetOnBattery state transitions
-            offset = 0;
-            while (offset < size) {
-                bool onBattery = data[offset++] & 0x01;
-                service_->SetOnBattery(onBattery);
-
-                if (offset + 4 <= size) {
-                    // Add some stats updates between state changes
-                    int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
-                    offset += 4;
-
-                    auto core = service_->GetBatteryStatsCore();
-                    if (core != nullptr) {
-                        core->UpdateStats(StatsUtils::STATS_TYPE_WAKELOCK_HOLD,
-                                        StatsUtils::STATS_STATE_ACTIVATED, 0, uid);
-                    }
-                }
-
-                if (offset >= size) break;
-            }
-
-            // Fuzz service lifecycle
-            // Test ready callback
-            if (size > 4) {
-                service_->OnStart();
-                service_->OnStop();
-                service_->OnStart();
-            }
-
-            // Fuzz debug info
-            if (offset + 16 <= size) {
-                auto core = service_->GetBatteryStatsCore();
-                if (core != nullptr) {
-                    std::string debugInfo(reinterpret_cast<const char*>(&data[offset]),
-                                        std::min(size_t(64), size - offset));
-                    core->UpdateDebugInfo(debugInfo);
-
-                    std::string dumpResult;
-                    core->GetDebugInfo(dumpResult);
-                }
+            if (offset + argLen <= size) {
+                std::string arg(reinterpret_cast<const char*>(&data[offset]), argLen);
+                args.push_back(arg);
+                offset += argLen;
             }
         }
 
-    private:
-        OHOS::sptr<BatteryStatsService> service_ = nullptr;
-    };
+        return args;
+    }
 
-    ListenerFuzzer g_fuzzer;
+    void FuzzStateTransitions(const uint8_t* data, size_t size)
+    {
+        size_t offset = 0;
+        while (offset < size) {
+            bool onBattery = (data[offset++] & BATTERY_STATE_MASK) != 0;
+            service_->SetOnBattery(onBattery);
+
+            if (offset + UID_BYTE_SIZE <= size) {
+                int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
+                offset += UID_BYTE_SIZE;
+
+                auto core = service_->GetBatteryStatsCore();
+                if (core != nullptr) {
+                    core->UpdateStats(
+                        StatsUtils::STATS_TYPE_WAKELOCK_HOLD,
+                        StatsUtils::STATS_STATE_ACTIVATED,
+                        0,
+                        uid);
+                }
+            }
+        }
+    }
+
+    void FuzzLifecycle(size_t size)
+    {
+        if (size <= MIN_LISTENER_DATA_SIZE) {
+            return;
+        }
+
+        service_->OnStart();
+        service_->OnStop();
+        service_->OnStart();
+    }
+
+    void FuzzDebugInfo(const uint8_t* data, size_t size, size_t offset)
+    {
+        if (offset + DEBUG_INFO_INPUT_REQUIREMENT > size) {
+            return;
+        }
+
+        auto core = service_->GetBatteryStatsCore();
+        if (core == nullptr) {
+            return;
+        }
+
+        size_t copyLen = std::min(DEBUG_INFO_MAX_LENGTH, size - offset);
+        std::string debugInfo(reinterpret_cast<const char*>(&data[offset]), copyLen);
+        core->UpdateDebugInfo(debugInfo);
+
+        std::string dumpResult;
+        core->GetDebugInfo(dumpResult);
+    }
+
+    OHOS::sptr<BatteryStatsService> service_ = nullptr;
+};
+
+ListenerFuzzer g_fuzzer;
 }
 
 /* Fuzzer entry point */
