@@ -42,7 +42,6 @@ bool WriteFuzzDataToFile(const uint8_t* data, size_t size)
 
     size_t written = fwrite(data, 1, size, fp);
     int closeResult = fclose(fp);
-
     if (written != size || closeResult != 0) {
         unlink(FUZZ_CONFIG_PATH);
         return false;
