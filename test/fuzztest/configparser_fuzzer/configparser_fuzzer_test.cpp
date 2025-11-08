@@ -26,24 +26,18 @@
 
 using namespace OHOS::PowerMgr;
 
-namespace
-{
+namespace {
 constexpr const char* FUZZ_CONFIG_PATH = "/data/local/tmp/fuzz_power_average.json";
 constexpr size_t BYTES_PER_KILOBYTE = 1024;
 constexpr size_t MAX_CONFIG_FILE_SIZE = BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE; // 1 MB cap
 constexpr uint16_t MAX_LEVEL_COUNT = 10;
 constexpr uint16_t MAX_CLUSTER_QUERIES = 16;
 
-void FuzzParserWithJSON(const uint8_t* data, size_t size)
+bool WriteFuzzDataToFile(const uint8_t* data, size_t size)
 {
-    if (data == nullptr || size == 0 || size > MAX_CONFIG_FILE_SIZE) {
-        return;
-    }
-
-    // Write fuzzer data to temp file
     FILE* fp = fopen(FUZZ_CONFIG_PATH, "w");
     if (fp == nullptr) {
-        return;
+        return false;
     }
 
     size_t written = fwrite(data, 1, size, fp);
@@ -51,16 +45,13 @@ void FuzzParserWithJSON(const uint8_t* data, size_t size)
 
     if (written != size || closeResult != 0) {
         unlink(FUZZ_CONFIG_PATH);
-        return;
+        return false;
     }
+    return true;
+}
 
-    // Create parser and try to parse the fuzzed JSON
-    auto parser = std::make_shared<BatteryStatsParser>();
-
-    // Init will try to load the config file
-    parser->Init();
-
-    // Test various parser methods
+void ExerciseAveragePowerQueries(const std::shared_ptr<BatteryStatsParser>& parser)
+{
     std::vector<std::string> testTypes = {
         StatsUtils::CURRENT_CPU_CLUSTER,
         StatsUtils::CURRENT_CPU_SPEED,
@@ -85,20 +76,39 @@ void FuzzParserWithJSON(const uint8_t* data, size_t size)
 
     for (const auto& type : testTypes) {
         parser->GetAveragePowerMa(type);
-
-        // Test with various levels
         for (uint16_t level = 0; level < MAX_LEVEL_COUNT; level++) {
             parser->GetAveragePowerMa(type, level);
         }
     }
+}
 
-    // Test cluster and speed queries
+void ExerciseClusterQueries(const std::shared_ptr<BatteryStatsParser>& parser)
+{
     uint16_t clusterNum = parser->GetClusterNum();
     for (uint16_t cluster = 0; cluster < clusterNum && cluster < MAX_CLUSTER_QUERIES; cluster++) {
         parser->GetSpeedNum(cluster);
     }
+}
 
-    // Test dump
+void FuzzParserWithJSON(const uint8_t* data, size_t size)
+{
+    if (data == nullptr || size == 0 || size > MAX_CONFIG_FILE_SIZE) {
+        return;
+    }
+
+    if (!WriteFuzzDataToFile(data, size)) {
+        return;
+    }
+
+    // Create parser and try to parse the fuzzed JSON
+    auto parser = std::make_shared<BatteryStatsParser>();
+
+    // Init will try to load the config file
+    parser->Init();
+
+    ExerciseAveragePowerQueries(parser);
+    ExerciseClusterQueries(parser);
+
     std::string dumpResult;
     parser->DumpInfo(dumpResult);
 

@@ -24,8 +24,7 @@
 
 using namespace OHOS::PowerMgr;
 
-namespace
-{
+namespace {
 constexpr size_t MIN_ENTITY_DATA_SIZE = 16;
 constexpr size_t ENTITY_PARAM_BYTES = 16;
 constexpr size_t INT16_BYTES = sizeof(int16_t);

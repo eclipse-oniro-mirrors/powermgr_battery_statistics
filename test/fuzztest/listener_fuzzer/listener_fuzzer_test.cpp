@@ -25,8 +25,7 @@
 
 using namespace OHOS::PowerMgr;
 
-namespace
-{
+namespace {
 constexpr size_t MIN_LISTENER_DATA_SIZE = sizeof(int32_t);
 constexpr size_t MAX_DUMPER_ARGS = 10;
 constexpr size_t PREDEFINED_ARG_SELECTOR = 2;

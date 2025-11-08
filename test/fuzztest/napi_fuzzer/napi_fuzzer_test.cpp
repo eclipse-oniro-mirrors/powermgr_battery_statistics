@@ -27,8 +27,7 @@
 
 using namespace OHOS::PowerMgr;
 
-namespace
-{
+namespace {
 constexpr size_t MIN_NAPI_DATA_SIZE = sizeof(int32_t);
 constexpr size_t CLIENT_BLOCK_BYTES = 8;
 constexpr size_t TOTALS_BLOCK_BYTES = 12;

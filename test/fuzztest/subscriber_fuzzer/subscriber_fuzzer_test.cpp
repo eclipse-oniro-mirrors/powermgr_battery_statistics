@@ -31,8 +31,7 @@ using namespace OHOS::PowerMgr;
 using namespace OHOS::EventFwk;
 using namespace OHOS::AAFwk;
 
-namespace
-{
+namespace {
 constexpr size_t MIN_SUBSCRIBER_DATA_SIZE = 16;
 constexpr size_t MAX_ACTION_STRING_SLICE = 32;
 constexpr size_t EVENT_PARAM_BYTES = sizeof(int32_t) * 3; // userId, uid, code

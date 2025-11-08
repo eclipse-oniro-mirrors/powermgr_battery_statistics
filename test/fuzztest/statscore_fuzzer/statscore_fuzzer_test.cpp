@@ -27,13 +27,56 @@
 
 using namespace OHOS::PowerMgr;
 
-namespace
-{
+namespace {
 constexpr size_t MIN_CORE_DATA_SIZE = 8;
 constexpr size_t UID_GUARD_BYTES = 4;
 constexpr size_t AGGREGATION_BLOCK_BYTES = 8;
 constexpr size_t DEBUG_INFO_INPUT_BYTES = 16;
 constexpr size_t DEBUG_INFO_MAX_LENGTH = 64;
+
+void HandleEntityRetrieval(const OHOS::sptr<BatteryStatsCore>& core, const uint8_t* data, size_t size)
+{
+    size_t offset = 0;
+    while (offset < size) {
+        uint8_t typeRaw = data[offset++];
+        auto type = static_cast<BatteryStatsInfo::ConsumptionType>(
+            typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
+
+        auto entity = core->GetEntity(type);
+        if (entity != nullptr) {
+            entity->Calculate();
+            (void)BatteryStatsEntity::GetStatsInfoList();
+        }
+
+        if (offset + UID_GUARD_BYTES > size) {
+            break;
+        }
+    }
+}
+
+size_t HandleAggregationQueries(const OHOS::sptr<BatteryStatsCore>& core, const uint8_t* data, size_t size)
+{
+    size_t offset = 0;
+    while (offset + AGGREGATION_BLOCK_BYTES <= size) {
+        int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
+        offset += sizeof(int32_t);
+
+        uint8_t typeRaw = data[offset++];
+        auto consumptionType = static_cast<BatteryStatsInfo::ConsumptionType>(
+            typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
+
+        core->GetAppStatsMah(uid);
+        core->GetAppStatsPercent(uid);
+        core->GetPartStatsMah(consumptionType);
+        core->GetPartStatsPercent(consumptionType);
+        (void)core->GetBatteryStats();
+
+        if (offset + AGGREGATION_BLOCK_BYTES > size) {
+            break;
+        }
+    }
+    return offset;
+}
 
 class StatsCoreFuzzer {
 public:
@@ -61,52 +104,8 @@ public:
             return;
         }
 
-        size_t offset = 0;
-
-        // Fuzz GetEntity operations
-        while (offset < size) {
-            uint8_t typeRaw = data[offset++];
-            auto type = static_cast<BatteryStatsInfo::ConsumptionType>(
-                typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
-
-            auto entity = core->GetEntity(type);
-            if (entity != nullptr) {
-                entity->Calculate();
-                (void)BatteryStatsEntity::GetStatsInfoList();
-            }
-
-            if (offset + UID_GUARD_BYTES > size) {
-                break;
-            }
-        }
-
-        // Reset offset for different fuzzing
-        offset = 0;
-
-        // Fuzz aggregation queries
-        while (offset + AGGREGATION_BLOCK_BYTES <= size) {
-            int32_t uid = *reinterpret_cast<const int32_t*>(&data[offset]);
-            offset += sizeof(int32_t);
-
-            uint8_t typeRaw = data[offset++];
-            auto consumptionType = static_cast<BatteryStatsInfo::ConsumptionType>(
-                typeRaw % static_cast<uint8_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID));
-
-            // Test per-app queries
-            core->GetAppStatsMah(uid);
-            core->GetAppStatsPercent(uid);
-
-            // Test per-component queries
-            core->GetPartStatsMah(consumptionType);
-            core->GetPartStatsPercent(consumptionType);
-
-            // Test battery stats list
-            (void)core->GetBatteryStats();
-
-            if (offset + AGGREGATION_BLOCK_BYTES > size) {
-                break;
-            }
-        }
+        HandleEntityRetrieval(core, data, size);
+        size_t offset = HandleAggregationQueries(core, data, size);
 
         // Fuzz save/load operations
         core->SaveBatteryStatsData();
