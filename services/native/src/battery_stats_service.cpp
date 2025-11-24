@@ -193,7 +193,7 @@ BatteryStatsInfoList BatteryStatsService::GetBatteryStats()
     std::lock_guard lock(mutex_);
     BatteryStatsInfoList statsInfoList = {};
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return statsInfoList;
     }
     core_->ComputePower();
@@ -230,7 +230,7 @@ double BatteryStatsService::GetAppStatsMah(const int32_t& uid)
 {
     std::lock_guard lock(mutex_);
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return StatsUtils::DEFAULT_VALUE;
     }
     core_->ComputePower();
@@ -241,7 +241,7 @@ double BatteryStatsService::GetAppStatsPercent(const int32_t& uid)
 {
     std::lock_guard lock(mutex_);
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return StatsUtils::DEFAULT_VALUE;
     }
     core_->ComputePower();
@@ -252,7 +252,7 @@ double BatteryStatsService::GetPartStatsMah(const BatteryStatsInfo::ConsumptionT
 {
     std::lock_guard lock(mutex_);
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return StatsUtils::DEFAULT_VALUE;
     }
     core_->ComputePower();
@@ -263,7 +263,7 @@ double BatteryStatsService::GetPartStatsPercent(const BatteryStatsInfo::Consumpt
 {
     std::lock_guard lock(mutex_);
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return StatsUtils::DEFAULT_VALUE;
     }
     core_->ComputePower();
@@ -273,7 +273,7 @@ double BatteryStatsService::GetPartStatsPercent(const BatteryStatsInfo::Consumpt
 uint64_t BatteryStatsService::GetTotalTimeSecond(const StatsUtils::StatsType& statsType, const int32_t& uid)
 {
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return ERR_OK;
     }
     STATS_HILOGD(COMP_SVC, "statsType: %{public}d, uid: %{public}d", statsType, uid);
@@ -291,7 +291,7 @@ uint64_t BatteryStatsService::GetTotalTimeSecond(const StatsUtils::StatsType& st
 uint64_t BatteryStatsService::GetTotalDataBytes(const StatsUtils::StatsType& statsType, const int32_t& uid)
 {
     if (!Permission::IsSystem()) {
-        lastError_ = StatsError::ERR_SYSTEM_API_DENIED;
+        lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return ERR_OK;
     }
     return core_->GetTotalDataCount(statsType, uid);
@@ -345,8 +345,8 @@ int32_t BatteryStatsService::GetBatteryStatsIpc(ParcelableBatteryStatsList& batt
 {
     StatsXCollie statsXCollie("BatteryStatsService::GetBatteryStatsIpc", false);
     batteryStats.statsList_ = GetBatteryStats();
-    tempError = static_cast<int32_t>(lastError_);
-    lastError_ = StatsError::ERR_OK;
+    tempError = lastError_.load();
+    lastError_ = static_cast<int32_t>(StatsError::ERR_OK);
     return ERR_OK;
 }
 
@@ -354,8 +354,8 @@ int32_t BatteryStatsService::GetAppStatsMahIpc(int32_t uid, double& appStatsMah,
 {
     StatsXCollie statsXCollie("BatteryStatsService::GetAppStatsMahIpc", false);
     appStatsMah = GetAppStatsMah(uid);
-    tempError = static_cast<int32_t>(lastError_);
-    lastError_ = StatsError::ERR_OK;
+    tempError = lastError_.load();
+    lastError_ = static_cast<int32_t>(StatsError::ERR_OK);
     return ERR_OK;
 }
 
@@ -363,8 +363,8 @@ int32_t BatteryStatsService::GetAppStatsPercentIpc(int32_t uid, double& appStats
 {
     StatsXCollie statsXCollie("BatteryStatsService::GetAppStatsPercentIpc", false);
     appStatsPercent = GetAppStatsPercent(uid);
-    tempError = static_cast<int32_t>(lastError_);
-    lastError_ = StatsError::ERR_OK;
+    tempError = lastError_.load();
+    lastError_ = static_cast<int32_t>(StatsError::ERR_OK);
     return ERR_OK;
 }
 
@@ -372,8 +372,8 @@ int32_t BatteryStatsService::GetPartStatsMahIpc(int32_t type, double& partStatsM
 {
     StatsXCollie statsXCollie("BatteryStatsService::GetPartStatsMahIpc", false);
     partStatsMah = GetPartStatsMah(static_cast<BatteryStatsInfo::ConsumptionType>(type));
-    tempError = static_cast<int32_t>(lastError_);
-    lastError_ = StatsError::ERR_OK;
+    tempError = lastError_.load();
+    lastError_ = static_cast<int32_t>(StatsError::ERR_OK);
     return ERR_OK;
 }
 
@@ -381,8 +381,8 @@ int32_t BatteryStatsService::GetPartStatsPercentIpc(int32_t type, double& partSt
 {
     StatsXCollie statsXCollie("BatteryStatsService::GetPartStatsPercentIpc", false);
     partStatsPercent = GetPartStatsPercent(static_cast<BatteryStatsInfo::ConsumptionType>(type));
-    tempError = static_cast<int32_t>(lastError_);
-    lastError_ = StatsError::ERR_OK;
+    tempError = lastError_.load();
+    lastError_ = static_cast<int32_t>(StatsError::ERR_OK);
     return ERR_OK;
 }
 

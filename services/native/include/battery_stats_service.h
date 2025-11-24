@@ -85,7 +85,7 @@ private:
     bool ready_ = false;
     static std::atomic_bool isBootCompleted_;
     std::mutex mutex_;
-    StatsError lastError_ = StatsError::ERR_OK;
+    std::atomic_int32_t lastError_ {static_cast<int32_t>(StatsError::ERR_OK)};
     bool SubscribeCommonEvent();
     bool AddHiSysEventListener();
     void RegisterBootCompletedCallback();
