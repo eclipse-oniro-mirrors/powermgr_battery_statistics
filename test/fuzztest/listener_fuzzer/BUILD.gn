@@ -22,7 +22,6 @@ ohos_fuzztest("ListenerFuzzTest") {
   fuzz_config_file = "${batterystats_root_path}/test/fuzztest/listener_fuzzer"
 
   include_dirs = [
-    "./",
     "${batterystats_service_native}/include",
     "${batterystats_utils_path}/native/include",
   ]
