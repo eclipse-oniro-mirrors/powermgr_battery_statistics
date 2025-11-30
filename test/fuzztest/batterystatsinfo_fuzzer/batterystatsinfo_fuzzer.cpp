@@ -25,9 +25,15 @@ using namespace OHOS::PowerMgr;
 
 namespace OHOS {
 namespace PowerMgr {
+namespace {
+const int32_t MIN_DATA_SIZE_MULTIPLIER = 2;
+const int32_t TEST_UID = 1000;
+const double TEST_POWER = 10.5;
+} // namespace
+
 bool BatteryStatsInfoFuzzTest(const uint8_t* data, size_t size)
 {
-    if (data == nullptr || size < sizeof(int32_t) * 2) {
+    if (data == nullptr || size < sizeof(int32_t) * MIN_DATA_SIZE_MULTIPLIER) {
         return false;
     }
 
@@ -78,9 +84,9 @@ bool ParcelableBatteryStatsListFuzzTest(const uint8_t* data, size_t size)
     // Test with valid data
     MessageParcel parcel2;
     parcel2.WriteInt32(1);  // size = 1
-    parcel2.WriteInt32(1000);  // uid
+    parcel2.WriteInt32(TEST_UID);  // uid
     parcel2.WriteInt32(0);  // type
-    parcel2.WriteDouble(10.5);  // power
+    parcel2.WriteDouble(TEST_POWER);  // power
     parcel2.RewindRead(0);
     auto list2 = ParcelableBatteryStatsList::Unmarshalling(parcel2);
     if (list2 != nullptr) {

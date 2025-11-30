@@ -13,6 +13,9 @@
  * limitations under the License.
  */
 
+#ifndef STATSHELPERGETONBATTERYUPTIMEMS_FUZZER_H
+#define STATSHELPERGETONBATTERYUPTIMEMS_FUZZER_H
+
 #include <cstdint>
 #include <unistd.h>
 #include <climits>
@@ -22,3 +25,4 @@
 
 #define FUZZ_PROJECT_NAME "statshelpergetonbatteryuptimems_fuzzer"
 
+#endif // STATSHELPERGETONBATTERYUPTIMEMS_FUZZER_H
