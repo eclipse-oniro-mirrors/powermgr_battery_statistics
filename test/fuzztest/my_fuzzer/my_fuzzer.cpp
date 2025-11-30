@@ -15,8 +15,7 @@
 
 #include "my_fuzzer.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
 #include <cstring>
 #include <vector>
 #include <string>

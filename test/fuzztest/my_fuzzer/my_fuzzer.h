@@ -13,6 +13,9 @@
  * limitations under the License.
  */
 
+#ifndef MY_FUZZER_H
+#define MY_FUZZER_H
+
 #include <cstdint>
 #include <unistd.h>
 #include <climits>
@@ -21,4 +24,6 @@
 #include <fcntl.h>
 
 #define FUZZ_PROJECT_NAME "my_fuzzer"
+
+#endif // MY_FUZZER_H
 
