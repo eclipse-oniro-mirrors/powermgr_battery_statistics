@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +38,39 @@ constexpr int32_t SPECIAL_UID_ROOT = 0;
 constexpr int32_t SPECIAL_UID_SYSTEM = 1000;
 constexpr int32_t SPECIAL_UID_SHELL = 2000;
 constexpr int32_t FIRST_APP_UID = 10000;
+constexpr int32_t INVALID_UID = -1;
+
+// Test case constants
+constexpr uint8_t TEST_CASES_UID = 8;
+constexpr uint8_t TEST_CASES_CONSUMPTION = 16;
+constexpr uint8_t TEST_CASES_STATS = 8;
+constexpr uint8_t TEST_CASES_DATA = 6;
+constexpr uint8_t TEST_CASES_DUMP = 5;
+
+// Minimum data size constants
+constexpr size_t MIN_SIZE_FOR_CONSUMPTION = 1;
+constexpr size_t MIN_SIZE_FOR_STATS = 2;
+constexpr size_t MIN_SIZE_FOR_EXTRA_TESTS = 3;
+
+// Case index constants
+enum TestCaseIndex {
+    CASE_0 = 0,
+    CASE_1 = 1,
+    CASE_2 = 2,
+    CASE_3 = 3,
+    CASE_4 = 4,
+    CASE_5 = 5,
+    CASE_6 = 6,
+    CASE_7 = 7,
+    CASE_8 = 8,
+    CASE_9 = 9,
+    CASE_10 = 10,
+    CASE_11 = 11,
+    CASE_12 = 12,
+    CASE_13 = 13,
+    CASE_14 = 14,
+    CASE_15 = 15
+};
 
 /**
  * @brief Extract int32_t UID from fuzzer data
@@ -80,30 +113,32 @@ void TestGetAppStatsMah(const uint8_t* data, size_t size)
     if (size >= MIN_SIZE + 1) {
         uint8_t testCase = data[MIN_SIZE];
         
-        switch (testCase % 8) {
-            case 0:
+        switch (testCase % TEST_CASES_UID) {
+            case CASE_0:
                 client.GetAppStatsMah(MIN_UID);
                 break;
-            case 1:
+            case CASE_1:
                 client.GetAppStatsMah(MAX_UID);
                 break;
-            case 2:
+            case CASE_2:
                 client.GetAppStatsMah(SPECIAL_UID_ROOT);
                 break;
-            case 3:
+            case CASE_3:
                 client.GetAppStatsMah(SPECIAL_UID_SYSTEM);
                 break;
-            case 4:
+            case CASE_4:
                 client.GetAppStatsMah(SPECIAL_UID_SHELL);
                 break;
-            case 5:
+            case CASE_5:
                 client.GetAppStatsMah(FIRST_APP_UID);
                 break;
-            case 6:
-                client.GetAppStatsMah(-1);  // Test negative UID
+            case CASE_6:
+                client.GetAppStatsMah(INVALID_UID);  // Test negative UID
                 break;
-            case 7:
+            case CASE_7:
                 client.GetAppStatsMah(INT32_MAX);  // Test maximum int32_t
+                break;
+            default:
                 break;
         }
     }
@@ -133,34 +168,98 @@ void TestGetAppStatsPercent(const uint8_t* data, size_t size)
     if (size >= MIN_SIZE + 1) {
         uint8_t testCase = data[MIN_SIZE];
         
-        switch (testCase % 8) {
-            case 0:
+        switch (testCase % TEST_CASES_UID) {
+            case CASE_0:
                 client.GetAppStatsPercent(MIN_UID);
                 break;
-            case 1:
+            case CASE_1:
                 client.GetAppStatsPercent(MAX_UID);
                 break;
-            case 2:
+            case CASE_2:
                 client.GetAppStatsPercent(SPECIAL_UID_ROOT);
                 break;
-            case 3:
+            case CASE_3:
                 client.GetAppStatsPercent(SPECIAL_UID_SYSTEM);
                 break;
-            case 4:
+            case CASE_4:
                 client.GetAppStatsPercent(SPECIAL_UID_SHELL);
                 break;
-            case 5:
+            case CASE_5:
                 client.GetAppStatsPercent(FIRST_APP_UID);
                 break;
-            case 6:
-                client.GetAppStatsPercent(-1);  // Test negative UID
+            case CASE_6:
+                client.GetAppStatsPercent(INVALID_UID);  // Test negative UID
                 break;
-            case 7:
+            case CASE_7:
                 client.GetAppStatsPercent(INT32_MAX);  // Test maximum int32_t
+                break;
+            default:
                 break;
         }
     }
 }
+}
+
+/**
+ * @brief Test predefined consumption types
+ * @param testCase Test case selector
+ */
+void TestPredefinedConsumptionTypes(uint8_t testCase)
+{
+    auto& client = BatteryStatsClient::GetInstance();
+    
+    switch (testCase % TEST_CASES_CONSUMPTION) {
+        case CASE_0:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID);
+            break;
+        case CASE_1:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_APP);
+            break;
+        case CASE_2:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_BLUETOOTH);
+            break;
+        case CASE_3:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_IDLE);
+            break;
+        case CASE_4:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_PHONE);
+            break;
+        case CASE_5:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_RADIO);
+            break;
+        case CASE_6:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_SCREEN);
+            break;
+        case CASE_7:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_USER);
+            break;
+        case CASE_8:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_WIFI);
+            break;
+        case CASE_9:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_CAMERA);
+            break;
+        case CASE_10:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_FLASHLIGHT);
+            break;
+        case CASE_11:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_AUDIO);
+            break;
+        case CASE_12:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_SENSOR);
+            break;
+        case CASE_13:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_GNSS);
+            break;
+        case CASE_14:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_CPU);
+            break;
+        case CASE_15:
+            client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_WAKELOCK);
+            break;
+        default:
+            break;
+    }
 }
 
 /**
@@ -170,7 +269,7 @@ void TestGetAppStatsPercent(const uint8_t* data, size_t size)
  */
 void TestGetPartStatsPercent(const uint8_t* data, size_t size)
 {
-    if (size < 1) {
+    if (size < MIN_SIZE_FOR_CONSUMPTION) {
         return;
     }
 
@@ -185,59 +284,8 @@ void TestGetPartStatsPercent(const uint8_t* data, size_t size)
     client.GetPartStatsPercent(type);
     
     // Test with predefined consumption types if we have extra data
-    if (size >= 2) {
-        uint8_t testCase = data[1];
-        
-        switch (testCase % 16) {
-            case 0:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID);
-                break;
-            case 1:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_APP);
-                break;
-            case 2:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_BLUETOOTH);
-                break;
-            case 3:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_IDLE);
-                break;
-            case 4:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_PHONE);
-                break;
-            case 5:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_RADIO);
-                break;
-            case 6:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_SCREEN);
-                break;
-            case 7:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_USER);
-                break;
-            case 8:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_WIFI);
-                break;
-            case 9:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_CAMERA);
-                break;
-            case 10:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_FLASHLIGHT);
-                break;
-            case 11:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_AUDIO);
-                break;
-            case 12:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_SENSOR);
-                break;
-            case 13:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_GNSS);
-                break;
-            case 14:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_CPU);
-                break;
-            case 15:
-                client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_WAKELOCK);
-                break;
-        }
+    if (size >= MIN_SIZE_FOR_STATS) {
+        TestPredefinedConsumptionTypes(data[1]);
     }
 }
 
@@ -258,7 +306,7 @@ void TestGetLastError()
  */
 void TestSetOnBattery(const uint8_t* data, size_t size)
 {
-    if (size < 1) {
+    if (size < MIN_SIZE_FOR_CONSUMPTION) {
         return;
     }
 
@@ -266,13 +314,13 @@ void TestSetOnBattery(const uint8_t* data, size_t size)
     auto& client = BatteryStatsClient::GetInstance();
     
     // Extract boolean value from fuzzer data
-    bool isOnBattery = (data[0] % 2) == 0;
+    bool isOnBattery = (data[0] % MIN_SIZE_FOR_STATS) == 0;
     
     // Test with extracted boolean value
     client.SetOnBattery(isOnBattery);
     
     // Test with both true and false if we have extra data
-    if (size >= 2) {
+    if (size >= MIN_SIZE_FOR_STATS) {
         client.SetOnBattery(true);
         client.SetOnBattery(false);
     }
@@ -295,7 +343,7 @@ void TestReset()
  */
 void TestGetTotalTimeSecond(const uint8_t* data, size_t size)
 {
-    if (size < 2) {
+    if (size < MIN_SIZE_FOR_STATS) {
         return;
     }
 
@@ -311,33 +359,35 @@ void TestGetTotalTimeSecond(const uint8_t* data, size_t size)
     client.GetTotalTimeSecond(statsType, uid);
     
     // Test with predefined stats types if we have extra data
-    if (size >= 3) {
-        uint8_t testCase = data[2];
+    if (size >= MIN_SIZE_FOR_EXTRA_TESTS) {
+        uint8_t testCase = data[MIN_SIZE_FOR_STATS];
         
-        switch (testCase % 8) {
-            case 0:
+        switch (testCase % TEST_CASES_STATS) {
+            case CASE_0:
                 client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_INVALID);
                 break;
-            case 1:
-                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_WIFI_ON, 10000);
+            case CASE_1:
+                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_WIFI_ON, FIRST_APP_UID);
                 break;
-            case 2:
-                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_BLUETOOTH_BR_ON, 1000);
+            case CASE_2:
+                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_BLUETOOTH_BR_ON, SPECIAL_UID_SYSTEM);
                 break;
-            case 3:
+            case CASE_3:
                 client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_SCREEN_ON);
                 break;
-            case 4:
-                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_CAMERA_ON, 0);
+            case CASE_4:
+                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_CAMERA_ON, MIN_UID);
                 break;
-            case 5:
-                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_GNSS_ON, -1);
+            case CASE_5:
+                client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_GNSS_ON, INVALID_UID);
                 break;
-            case 6:
+            case CASE_6:
                 client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_CPU_ACTIVE);
                 break;
-            case 7:
+            case CASE_7:
                 client.GetTotalTimeSecond(StatsUtils::STATS_TYPE_ALARM, INT32_MAX);
+                break;
+            default:
                 break;
         }
     }
@@ -350,7 +400,7 @@ void TestGetTotalTimeSecond(const uint8_t* data, size_t size)
  */
 void TestGetTotalDataBytes(const uint8_t* data, size_t size)
 {
-    if (size < 2) {
+    if (size < MIN_SIZE_FOR_STATS) {
         return;
     }
 
@@ -366,27 +416,29 @@ void TestGetTotalDataBytes(const uint8_t* data, size_t size)
     client.GetTotalDataBytes(statsType, uid);
     
     // Test with predefined stats types if we have extra data
-    if (size >= 3) {
-        uint8_t testCase = data[2];
+    if (size >= MIN_SIZE_FOR_EXTRA_TESTS) {
+        uint8_t testCase = data[MIN_SIZE_FOR_STATS];
         
-        switch (testCase % 6) {
-            case 0:
+        switch (testCase % TEST_CASES_DATA) {
+            case CASE_0:
                 client.GetTotalDataBytes(StatsUtils::STATS_TYPE_INVALID);
                 break;
-            case 1:
-                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_WIFI_ON, 10000);
+            case CASE_1:
+                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_WIFI_ON, FIRST_APP_UID);
                 break;
-            case 2:
-                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_BLUETOOTH_BR_ON, 1000);
+            case CASE_2:
+                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_BLUETOOTH_BR_ON, SPECIAL_UID_SYSTEM);
                 break;
-            case 3:
-                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_PHONE_DATA, 0);
+            case CASE_3:
+                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_PHONE_DATA, MIN_UID);
                 break;
-            case 4:
-                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_PHONE_DATA, -1);
+            case CASE_4:
+                client.GetTotalDataBytes(StatsUtils::STATS_TYPE_PHONE_DATA, INVALID_UID);
                 break;
-            case 5:
+            case CASE_5:
                 client.GetTotalDataBytes(StatsUtils::STATS_TYPE_PHONE_DATA, INT32_MAX);
+                break;
+            default:
                 break;
         }
     }
@@ -407,35 +459,37 @@ void TestDump(const uint8_t* data, size_t size)
     client.Dump(emptyArgs);
     
     // Test with various dump arguments if we have data
-    if (size >= 1) {
+    if (size >= MIN_SIZE_FOR_CONSUMPTION) {
         uint8_t testCase = data[0];
         
-        switch (testCase % 5) {
-            case 0: {
+        switch (testCase % TEST_CASES_DUMP) {
+            case CASE_0: {
                 std::vector<std::string> args1 = {"-batterystats"};
                 client.Dump(args1);
                 break;
             }
-            case 1: {
+            case CASE_1: {
                 std::vector<std::string> args2 = {"-u", "10000"};
                 client.Dump(args2);
                 break;
             }
-            case 2: {
+            case CASE_2: {
                 std::vector<std::string> args3 = {"-reset"};
                 client.Dump(args3);
                 break;
             }
-            case 3: {
+            case CASE_3: {
                 std::vector<std::string> args4 = {"-invalid"};
                 client.Dump(args4);
                 break;
             }
-            case 4: {
+            case CASE_4: {
                 std::vector<std::string> args5 = {"-batterystats", "-u", "1000"};
                 client.Dump(args5);
                 break;
             }
+            default:
+                break;
         }
     }
 }
