@@ -83,8 +83,13 @@ int32_t ExtractUid(const uint8_t* data, size_t size)
         return MIN_UID;
     }
 
-    int32_t uid;
-    std::memcpy(&uid, data, sizeof(int32_t));
+    // Safe extraction using bit operations
+    int32_t uid = static_cast<int32_t>(
+        (static_cast<uint32_t>(data[0]) << 0) |
+        (static_cast<uint32_t>(data[1]) << 8) |
+        (static_cast<uint32_t>(data[2]) << 16) |
+        (static_cast<uint32_t>(data[3]) << 24)
+    );
     return uid;
 }
 
@@ -200,14 +205,13 @@ void TestGetAppStatsPercent(const uint8_t* data, size_t size)
 }
 
 /**
- * @brief Test predefined consumption types
- * @param testCase Test case selector
+ * @brief Test consumption types for first half (0-7)
+ * @param client BatteryStatsClient instance
+ * @param caseIndex Test case index
  */
-void TestPredefinedConsumptionTypes(uint8_t testCase)
+void TestConsumptionTypesFirstHalf(BatteryStatsClient& client, uint8_t caseIndex)
 {
-    auto& client = BatteryStatsClient::GetInstance();
-    
-    switch (testCase % TEST_CASES_CONSUMPTION) {
+    switch (caseIndex) {
         case CASE_0:
             client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID);
             break;
@@ -232,6 +236,19 @@ void TestPredefinedConsumptionTypes(uint8_t testCase)
         case CASE_7:
             client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_USER);
             break;
+        default:
+            break;
+    }
+}
+
+/**
+ * @brief Test consumption types for second half (8-15)
+ * @param client BatteryStatsClient instance
+ * @param caseIndex Test case index
+ */
+void TestConsumptionTypesSecondHalf(BatteryStatsClient& client, uint8_t caseIndex)
+{
+    switch (caseIndex) {
         case CASE_8:
             client.GetPartStatsPercent(BatteryStatsInfo::CONSUMPTION_TYPE_WIFI);
             break;
@@ -258,6 +275,22 @@ void TestPredefinedConsumptionTypes(uint8_t testCase)
             break;
         default:
             break;
+    }
+}
+
+/**
+ * @brief Test predefined consumption types
+ * @param testCase Test case selector
+ */
+void TestPredefinedConsumptionTypes(uint8_t testCase)
+{
+    auto& client = BatteryStatsClient::GetInstance();
+    uint8_t caseIndex = testCase % TEST_CASES_CONSUMPTION;
+    
+    if (caseIndex < CASE_8) {
+        TestConsumptionTypesFirstHalf(client, caseIndex);
+    } else {
+        TestConsumptionTypesSecondHalf(client, caseIndex);
     }
 }
 
