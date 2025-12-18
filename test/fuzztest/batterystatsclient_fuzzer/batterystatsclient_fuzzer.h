@@ -25,5 +25,5 @@
 
 #define FUZZ_PROJECT_NAME "batterystatsclient_fuzzer"
 
-#endif 
+#endif
 
