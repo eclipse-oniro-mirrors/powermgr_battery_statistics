@@ -17,7 +17,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("MyFuzzer") {
+ohos_fuzztest("BatterystatsclientFuzzTest") {
   module_out_path = "battery_statistics/battery_statistics"
 
   include_dirs = [
@@ -33,7 +33,7 @@ ohos_fuzztest("MyFuzzer") {
   ]
   
   sources = [
-    "my_fuzzer.cpp",
+    "batterystatsclient_fuzzer.cpp",
   ]
   
   deps = [
@@ -49,10 +49,9 @@ ohos_fuzztest("MyFuzzer") {
 ###############################################################################
 group("fuzztest") {
   testonly = true
-  deps = []
-  deps += [
+  deps = [
     # deps file
-    ":MyFuzzer",
+    ":BatterystatsclientFuzzTest",
   ]
 }
 ###############################################################################

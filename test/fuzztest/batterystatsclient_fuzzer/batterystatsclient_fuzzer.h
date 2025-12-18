@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MY_FUZZER_H
-#define MY_FUZZER_H
+#ifndef BATTERYSTATSCLIENT_FUZZER_H
+#define BATTERYSTATSCLIENT_FUZZER_H
 
 #include <cstdint>
 #include <unistd.h>
@@ -23,7 +23,7 @@
 #include <cstdlib>
 #include <fcntl.h>
 
-#define FUZZ_PROJECT_NAME "my_fuzzer"
+#define FUZZ_PROJECT_NAME "batterystatsclient_fuzzer"
 
-#endif // MY_FUZZER_H
+#endif 
 

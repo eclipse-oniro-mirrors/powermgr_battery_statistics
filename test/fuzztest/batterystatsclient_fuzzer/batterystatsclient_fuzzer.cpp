@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "my_fuzzer.h"
+#include "batterystatsclient_fuzzer.h"
 
 #include <cstddef>
 #include <cstring>
