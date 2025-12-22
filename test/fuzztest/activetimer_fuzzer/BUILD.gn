@@ -14,7 +14,7 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 
-ohos_fuzztest("ActivetimerFuzzer") {
+ohos_fuzztest("ActivetimerFuzzTest") {
   module_out_path = "battery_statistics/battery_statistics"
 
   include_dirs = [ "//base/powermgr/battery_statistics/utils/native/include" ]
@@ -38,6 +38,6 @@ ohos_fuzztest("ActivetimerFuzzer") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":ActivetimerFuzzer" ]
+  deps = [ ":ActivetimerFuzzTest" ]
 }
 

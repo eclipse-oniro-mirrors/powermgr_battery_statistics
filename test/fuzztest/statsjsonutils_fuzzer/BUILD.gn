@@ -14,7 +14,7 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 
-ohos_fuzztest("StatsjsonutilsFuzzer") {
+ohos_fuzztest("StatsjsonutilsFuzzTest") {
   module_out_path = "battery_statistics/battery_statistics"
 
   include_dirs = [ "//base/powermgr/battery_statistics/utils/native/include" ]
@@ -40,10 +40,10 @@ ohos_fuzztest("StatsjsonutilsFuzzer") {
 ###############################################################################
 group("fuzztest") {
   testonly = true
-  deps = []
-  deps += [
+  deps = [
+
     # deps file
-    ":StatsjsonutilsFuzzer",
+    ":StatsjsonutilsFuzzTest",
   ]
 }
 ###############################################################################
