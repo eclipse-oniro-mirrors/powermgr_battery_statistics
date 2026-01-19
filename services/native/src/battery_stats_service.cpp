@@ -276,6 +276,7 @@ uint64_t BatteryStatsService::GetTotalTimeSecond(const StatsUtils::StatsType& st
         lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return ERR_OK;
     }
+    std::lock_guard lock(mutex_);
     STATS_HILOGD(COMP_SVC, "statsType: %{public}d, uid: %{public}d", statsType, uid);
     uint64_t timeSecond;
     if (uid > StatsUtils::INVALID_VALUE) {
@@ -294,7 +295,21 @@ uint64_t BatteryStatsService::GetTotalDataBytes(const StatsUtils::StatsType& sta
         lastError_ = static_cast<int32_t>(StatsError::ERR_SYSTEM_API_DENIED);
         return ERR_OK;
     }
+    std::lock_guard lock(mutex_);
     return core_->GetTotalDataCount(statsType, uid);
+}
+
+void BatteryStatsService::UpdateStats(StatsUtils::StatsType statsType, int64_t time, int64_t data, int32_t uid)
+{
+    std::lock_guard lock(mutex_);
+    core_->UpdateStats(statsType, time, data, uid);
+}
+
+void BatteryStatsService::UpdateStats(StatsUtils::StatsType statsType, StatsUtils::StatsState state, int16_t level,
+    int32_t uid, const std::string& deviceId)
+{
+    std::lock_guard lock(mutex_);
+    core_->UpdateStats(statsType, state, level, uid, deviceId);
 }
 
 void BatteryStatsService::Reset()
@@ -302,6 +317,7 @@ void BatteryStatsService::Reset()
     if (!Permission::IsSystem()) {
         return;
     }
+    std::lock_guard lock(mutex_);
     core_->Reset();
 }
 
