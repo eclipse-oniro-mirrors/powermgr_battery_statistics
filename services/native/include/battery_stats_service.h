@@ -62,6 +62,11 @@ public:
     double GetPartStatsPercent(const BatteryStatsInfo::ConsumptionType& type);
     uint64_t GetTotalTimeSecond(const StatsUtils::StatsType& statsType, const int32_t& uid = StatsUtils::INVALID_VALUE);
     uint64_t GetTotalDataBytes(const StatsUtils::StatsType& statsType, const int32_t& uid = StatsUtils::INVALID_VALUE);
+    void UpdateStats(StatsUtils::StatsType statsType, StatsUtils::StatsState state,
+        int16_t level = StatsUtils::INVALID_VALUE, int32_t uid = StatsUtils::INVALID_VALUE,
+        const std::string& deviceId = "");
+    void UpdateStats(StatsUtils::StatsType statsType, int64_t time, int64_t data,
+        int32_t uid = StatsUtils::INVALID_VALUE);
     void Reset();
     void SetOnBattery(bool isOnBattery);
     std::string ShellDump(const std::vector<std::string>& args, uint32_t argc);
