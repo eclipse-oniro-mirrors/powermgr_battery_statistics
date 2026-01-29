@@ -211,6 +211,7 @@ std::shared_ptr<BatteryStatsEntity> BatteryStatsCore::GetEntity(const BatterySta
 
 void BatteryStatsCore::UpdateStats(StatsUtils::StatsType statsType, int64_t time, int64_t data, int32_t uid)
 {
+    std::lock_guard lock(mutex_);
     STATS_HILOGD(COMP_SVC,
         "Update for duration, statsType: %{public}s, uid: %{public}d, time: %{public}" PRId64 ", "  \
         "data: %{public}" PRId64 "",
@@ -280,6 +281,7 @@ void BatteryStatsCore::UpdateCommonStats(StatsUtils::StatsType statsType, StatsU
 void BatteryStatsCore::UpdateStats(StatsUtils::StatsType statsType, StatsUtils::StatsState state, int16_t level,
     int32_t uid, const std::string& deviceId)
 {
+    std::lock_guard lock(mutex_);
     STATS_HILOGD(COMP_SVC,
         "Update for state, statsType: %{public}s, uid: %{public}d, state: %{public}d, level: %{public}d,"   \
         "deviceId: %{private}s",
@@ -567,6 +569,7 @@ void BatteryStatsCore::UpdateCounter(std::shared_ptr<BatteryStatsEntity> entity,
 
 int64_t BatteryStatsCore::GetTotalTimeMs(StatsUtils::StatsType statsType, int16_t level)
 {
+    std::lock_guard lock(mutex_);
     STATS_HILOGD(COMP_SVC, "Handle statsType: %{public}s, level: %{public}d",
         StatsUtils::ConvertStatsType(statsType).c_str(), level);
     int64_t time = StatsUtils::DEFAULT_VALUE;
@@ -648,6 +651,7 @@ void BatteryStatsCore::GetDebugInfo(std::string& result)
 
 int64_t BatteryStatsCore::GetTotalTimeMs(int32_t uid, StatsUtils::StatsType statsType, int16_t level)
 {
+    std::lock_guard lock(mutex_);
     STATS_HILOGD(COMP_SVC, "Handle statsType: %{public}s, uid: %{public}d, level: %{public}d",
         StatsUtils::ConvertStatsType(statsType).c_str(), uid, level);
     int64_t time = StatsUtils::DEFAULT_VALUE;
