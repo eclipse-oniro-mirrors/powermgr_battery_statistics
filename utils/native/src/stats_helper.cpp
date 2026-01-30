@@ -103,7 +103,7 @@ int64_t StatsHelper::GetOnBatteryBootTimeMs()
     std::lock_guard<std::mutex> lock(g_helperMutex);
     int64_t onBatteryBootTimeMs = onBatteryBootTimeMs_;
     int64_t currentBootTimeMs = GetBootTimeMs();
-    if (IsOnBattery()) {
+    if (onBattery_) {
         onBatteryBootTimeMs += currentBootTimeMs - latestUnplugBootTimeMs_;
     }
     STATS_HILOGD(COMP_SVC, "Get on battery boot time: %{public}" PRId64 ", currentBootTimeMs: %{public}" PRId64 "," \
@@ -117,7 +117,7 @@ int64_t StatsHelper::GetOnBatteryUpTimeMs()
     std::lock_guard<std::mutex> lock(g_helperMutex);
     int64_t onBatteryUpTimeMs = onBatteryUpTimeMs_;
     int64_t currentUpTimeMs = GetUpTimeMs();
-    if (IsOnBattery()) {
+    if (onBattery_) {
         onBatteryUpTimeMs += currentUpTimeMs - latestUnplugUpTimeMs_;
     }
     STATS_HILOGD(COMP_SVC, "Get on battery up time: %{public}" PRId64 "", onBatteryUpTimeMs);
