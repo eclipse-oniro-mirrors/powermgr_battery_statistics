@@ -34,5 +34,6 @@ group("fuzztest") {
     "napi_fuzzer:NapiFuzzTest",
     "statscore_fuzzer:StatsCoreFuzzTest",
     "subscriber_fuzzer:SubscriberFuzzTest",
+    "batteryparcel_fuzzer:BatteryparcelFuzzTest",
   ]
 }
