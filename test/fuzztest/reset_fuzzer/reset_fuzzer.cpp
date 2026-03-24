@@ -43,7 +43,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     
     /* Generate UID safely without memcpy */
     int32_t uid = StatsUtils::INVALID_VALUE;
-    if (size >= sizeof(int32_t) + 1) {       
+    if (size >= sizeof(int32_t) + 1) {
         uint32_t temp = 0;
         for (size_t i = 0; i < sizeof(uint32_t) && (i + 1) < size; ++i) {
             temp = (temp << BIT_PER_BYTE) | data[i + 1];
