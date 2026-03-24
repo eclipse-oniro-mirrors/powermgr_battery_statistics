@@ -15,12 +15,11 @@
 #include "stats_helper.h"
 
 #include <ctime>
-#include <mutex>
+
 #include "battery_stats_info.h"
 
 namespace OHOS {
 namespace PowerMgr {
-static std::mutex g_helperMutex;
 int64_t StatsHelper::latestUnplugBootTimeMs_ = StatsUtils::DEFAULT_VALUE;
 int64_t StatsHelper::latestUnplugUpTimeMs_ = StatsUtils::DEFAULT_VALUE;
 int64_t StatsHelper::onBatteryBootTimeMs_ = StatsUtils::DEFAULT_VALUE;
@@ -60,7 +59,6 @@ int64_t StatsHelper::GetUpTimeMs()
 
 void StatsHelper::SetOnBattery(bool onBattery)
 {
-    std::lock_guard<std::mutex> lock(g_helperMutex);
     if (onBattery_ != onBattery) {
         onBattery_ = onBattery;
         // when onBattery is ture, status is unplugin.
@@ -79,7 +77,6 @@ void StatsHelper::SetOnBattery(bool onBattery)
 
 void StatsHelper::SetScreenOff(bool screenOff)
 {
-    std::lock_guard<std::mutex> lock(g_helperMutex);
     if (screenOff_ != screenOff) {
         screenOff_ = screenOff;
         STATS_HILOGD(COMP_SVC, "Update screen off state: %{public}d", screenOff);
@@ -88,22 +85,19 @@ void StatsHelper::SetScreenOff(bool screenOff)
 
 bool StatsHelper::IsOnBattery()
 {
-    std::lock_guard<std::mutex> lock(g_helperMutex);
     return onBattery_;
 }
 
 bool StatsHelper::IsOnBatteryScreenOff()
 {
-    std::lock_guard<std::mutex> lock(g_helperMutex);
     return onBattery_ && screenOff_;
 }
 
 int64_t StatsHelper::GetOnBatteryBootTimeMs()
 {
-    std::lock_guard<std::mutex> lock(g_helperMutex);
     int64_t onBatteryBootTimeMs = onBatteryBootTimeMs_;
     int64_t currentBootTimeMs = GetBootTimeMs();
-    if (onBattery_) {
+    if (IsOnBattery()) {
         onBatteryBootTimeMs += currentBootTimeMs - latestUnplugBootTimeMs_;
     }
     STATS_HILOGD(COMP_SVC, "Get on battery boot time: %{public}" PRId64 ", currentBootTimeMs: %{public}" PRId64 "," \
@@ -114,10 +108,9 @@ int64_t StatsHelper::GetOnBatteryBootTimeMs()
 
 int64_t StatsHelper::GetOnBatteryUpTimeMs()
 {
-    std::lock_guard<std::mutex> lock(g_helperMutex);
     int64_t onBatteryUpTimeMs = onBatteryUpTimeMs_;
     int64_t currentUpTimeMs = GetUpTimeMs();
-    if (onBattery_) {
+    if (IsOnBattery()) {
         onBatteryUpTimeMs += currentUpTimeMs - latestUnplugUpTimeMs_;
     }
     STATS_HILOGD(COMP_SVC, "Get on battery up time: %{public}" PRId64 "", onBatteryUpTimeMs);
