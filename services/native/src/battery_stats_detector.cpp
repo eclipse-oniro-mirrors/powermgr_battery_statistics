@@ -44,13 +44,14 @@ void BatteryStatsDetector::HandleStatsChangedEvent(StatsUtils::StatsData data)
         STATS_HILOGE(COMP_SVC, "Get battery stats service failed");
         return;
     }
+    auto core = bss->GetBatteryStatsCore();
     if (IsDurationRelated(data.type)) {
         // Update related timer with reported time
         // The traffic won't participate the power consumption calculation, just for dump info
-        bss->UpdateStats(data.type, data.time, data.traffic, data.uid);
+        core->UpdateStats(data.type, data.time, data.traffic, data.uid);
     } else if (IsStateRelated(data.type)) {
         // Update related timer based on state or level
-        bss->UpdateStats(data.type, data.state, data.level, data.uid, data.deviceId);
+        core->UpdateStats(data.type, data.state, data.level, data.uid, data.deviceId);
     }
     HandleDebugInfo(data);
 }

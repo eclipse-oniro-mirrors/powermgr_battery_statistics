@@ -19,21 +19,21 @@ group("fuzztest") {
   deps = []
 
   deps += [
+    # deps file
     "getappstatsmah_fuzzer:GetAppStatsMahFuzzTest",
     "getappstatspercent_fuzzer:GetAppStatsPercentFuzzTest",
     "getbatterystats_fuzzer:GetBatteryStatsFuzzTest",
+    "getcount_fuzzer:GetCountFuzzTest",
     "getpartstatsmah_fuzzer:GetPartStatsMahFuzzTest",
     "getpartstatspercent_fuzzer:GetPartStatsPercentFuzzTest",
     "gettotaldatabytes_fuzzer:GetTotalDataBytesFuzzTest",
     "gettotaltimesecond_fuzzer:GetTotalTimeSecondFuzzTest",
     "resetdump_fuzzer:ResetDumpFuzzTest",
     "setonbattery_fuzzer:SetOnBatteryFuzzTest",
-    "configparser_fuzzer:ConfigParserFuzzTest",
-    "entityupdate_fuzzer:EntityUpdateFuzzTest",
-    "listener_fuzzer:ListenerFuzzTest",
-    "napi_fuzzer:NapiFuzzTest",
-    "statscore_fuzzer:StatsCoreFuzzTest",
-    "subscriber_fuzzer:SubscriberFuzzTest",
-    "batteryparcel_fuzzer:BatteryparcelFuzzTest",
+    "reset_fuzzer:ResetFuzzTest",
+  
+    
+    
+
   ]
 }
