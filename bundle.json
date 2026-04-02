@@ -95,7 +95,9 @@
         "//base/powermgr/battery_statistics/test:fuzztest",
         "//base/powermgr/battery_statistics/test:systemtest",
         "//base/powermgr/battery_statistics/frameworks/ets/taihe:batterystats_taihe_test",
-        "//base/powermgr/battery_statistics/test/fuzztest/batterystatsclient_fuzzer:fuzztest"
+        "//base/powermgr/battery_statistics/test/fuzztest/batterystatsclient_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/getcount_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/reset_fuzzer:fuzztest"
       ]
     }
   }

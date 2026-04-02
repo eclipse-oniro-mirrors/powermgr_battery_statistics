@@ -23,11 +23,17 @@ group("fuzztest") {
     "getappstatsmah_fuzzer:GetAppStatsMahFuzzTest",
     "getappstatspercent_fuzzer:GetAppStatsPercentFuzzTest",
     "getbatterystats_fuzzer:GetBatteryStatsFuzzTest",
+    "getcount_fuzzer:GetCountFuzzTest",
     "getpartstatsmah_fuzzer:GetPartStatsMahFuzzTest",
     "getpartstatspercent_fuzzer:GetPartStatsPercentFuzzTest",
     "gettotaldatabytes_fuzzer:GetTotalDataBytesFuzzTest",
     "gettotaltimesecond_fuzzer:GetTotalTimeSecondFuzzTest",
     "resetdump_fuzzer:ResetDumpFuzzTest",
     "setonbattery_fuzzer:SetOnBatteryFuzzTest",
+    "reset_fuzzer:ResetFuzzTest",
+  
+    
+    
+
   ]
 }
