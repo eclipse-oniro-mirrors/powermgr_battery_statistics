@@ -1,0 +1,57 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("../../../batterystats.gni")
+
+module_output_path = "battery_statistics/battery_statistics"
+
+##############################fuzztest##########################################
+ohos_fuzztest("EntityUpdateFuzzTest") {
+  module_out_path = module_output_path
+  fuzz_config_file =
+      "${batterystats_root_path}/test/fuzztest/entityupdate_fuzzer"
+
+  include_dirs = [
+    "${batterystats_service_native}/include",
+    "${batterystats_utils_path}/native/include",
+  ]
+
+  configs = [ "${batterystats_utils_path}:coverage_flags" ]
+
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+  ]
+
+  sources = [ "./entityupdate_fuzzer_test.cpp" ]
+
+  deps = [
+    "${batterystats_service_path}:batterystats_service",
+    "${batterystats_service_path}:batterystats_stub",
+    "${batterystats_utils_path}:batterystats_utils",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "cJSON:cjson",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "hilog:libhilog",
+    "hisysevent:libhisyseventmanager",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+  ]
+}

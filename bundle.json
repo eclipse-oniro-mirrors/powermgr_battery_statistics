@@ -95,13 +95,9 @@
         "//base/powermgr/battery_statistics/test:fuzztest",
         "//base/powermgr/battery_statistics/test:systemtest",
         "//base/powermgr/battery_statistics/frameworks/ets/taihe:batterystats_taihe_test",
-        "//base/powermgr/battery_statistics/test/fuzztest/counter_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/activetimer_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/statshelpergetonbatteryuptimems_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/batterystatsinfo_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/batterystatsClientcallback_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/statsjsonutils_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/statsutils_fuzzer:fuzztest"
+        "//base/powermgr/battery_statistics/test/fuzztest/batterystatsclient_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/getcount_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/reset_fuzzer:fuzztest"
       ]
     }
   }
