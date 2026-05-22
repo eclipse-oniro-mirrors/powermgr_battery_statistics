@@ -88,20 +88,21 @@ public:
         std::string result;
         parser->DumpInfo(result);
 
+        size_t safeSize = (size > 0) ? size : 1;
         size_t offset = 0;
         size_t iterations = 0;
         while (offset < size && iterations < MAX_LOOP_ITERATIONS) {
             iterations++;
             std::string type = ReadString(data, size, offset);
             if (type.empty()) {
-                type = QUERY_TYPES[data[offset % size] % QUERY_TYPE_COUNT];
+                type = QUERY_TYPES[data[offset % safeSize] % QUERY_TYPE_COUNT];
                 offset++;
             }
 
             parser->GetAveragePowerMa(type);
-            parser->GetAveragePowerMa(type, static_cast<uint16_t>(data[offset % size] % MAX_LEVEL));
+            parser->GetAveragePowerMa(type, static_cast<uint16_t>(data[offset % safeSize] % MAX_LEVEL));
             parser->GetClusterNum();
-            parser->GetSpeedNum(static_cast<uint16_t>(data[offset % size] % MAX_QUERY_COUNT));
+            parser->GetSpeedNum(static_cast<uint16_t>(data[offset % safeSize] % MAX_QUERY_COUNT));
         }
 
         for (size_t i = 0; i < QUERY_TYPE_COUNT; i++) {
