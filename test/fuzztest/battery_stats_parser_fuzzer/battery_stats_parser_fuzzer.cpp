@@ -32,6 +32,29 @@ constexpr size_t MAX_QUERY_STRING_BYTES = 32;
 constexpr size_t MAX_LEVEL = 16;
 constexpr size_t MAX_QUERY_COUNT = 8;
 constexpr size_t MAX_LOOP_ITERATIONS = 64;
+constexpr size_t QUERY_TYPE_COUNT = 19;
+
+const std::string QUERY_TYPES[QUERY_TYPE_COUNT] = {
+    StatsUtils::CURRENT_CPU_CLUSTER,
+    StatsUtils::CURRENT_CPU_SPEED,
+    StatsUtils::CURRENT_RADIO_ON,
+    StatsUtils::CURRENT_RADIO_DATA,
+    StatsUtils::CURRENT_WIFI_ON,
+    StatsUtils::CURRENT_WIFI_SCAN,
+    StatsUtils::CURRENT_BLUETOOTH_BR_ON,
+    StatsUtils::CURRENT_BLUETOOTH_BR_SCAN,
+    StatsUtils::CURRENT_GNSS_ON,
+    StatsUtils::CURRENT_CAMERA_ON,
+    StatsUtils::CURRENT_FLASHLIGHT_ON,
+    StatsUtils::CURRENT_AUDIO_ON,
+    StatsUtils::CURRENT_SENSOR_GRAVITY,
+    StatsUtils::CURRENT_SCREEN_ON,
+    StatsUtils::CURRENT_SCREEN_BRIGHTNESS,
+    StatsUtils::CURRENT_CPU_AWAKE,
+    StatsUtils::CURRENT_ALARM_ON,
+    StatsUtils::CURRENT_CPU_ACTIVE,
+    StatsUtils::CURRENT_CPU_IDLE
+};
 
 std::string ReadString(const uint8_t* data, size_t size, size_t& offset)
 {
@@ -49,31 +72,6 @@ std::string ReadString(const uint8_t* data, size_t size, size_t& offset)
     offset += length;
     return value;
 }
-
-std::vector<std::string> BuildQueryTypes()
-{
-    return {
-        StatsUtils::CURRENT_CPU_CLUSTER,
-        StatsUtils::CURRENT_CPU_SPEED,
-        StatsUtils::CURRENT_RADIO_ON,
-        StatsUtils::CURRENT_RADIO_DATA,
-        StatsUtils::CURRENT_WIFI_ON,
-        StatsUtils::CURRENT_WIFI_SCAN,
-        StatsUtils::CURRENT_BLUETOOTH_BR_ON,
-        StatsUtils::CURRENT_BLUETOOTH_BR_SCAN,
-        StatsUtils::CURRENT_GNSS_ON,
-        StatsUtils::CURRENT_CAMERA_ON,
-        StatsUtils::CURRENT_FLASHLIGHT_ON,
-        StatsUtils::CURRENT_AUDIO_ON,
-        StatsUtils::CURRENT_SENSOR_GRAVITY,
-        StatsUtils::CURRENT_SCREEN_ON,
-        StatsUtils::CURRENT_SCREEN_BRIGHTNESS,
-        StatsUtils::CURRENT_CPU_AWAKE,
-        StatsUtils::CURRENT_ALARM_ON,
-        StatsUtils::CURRENT_CPU_ACTIVE,
-        StatsUtils::CURRENT_CPU_IDLE
-    };
-}
 } // namespace
 
 class BatteryStatsParserFuzzer {
@@ -90,17 +88,13 @@ public:
         std::string result;
         parser->DumpInfo(result);
 
-        auto queryTypes = BuildQueryTypes();
-        if (queryTypes.empty()) {
-            return;
-        }
         size_t offset = 0;
         size_t iterations = 0;
         while (offset < size && iterations < MAX_LOOP_ITERATIONS) {
             iterations++;
             std::string type = ReadString(data, size, offset);
             if (type.empty()) {
-                type = queryTypes[data[offset % size] % queryTypes.size()];
+                type = QUERY_TYPES[data[offset % size] % QUERY_TYPE_COUNT];
                 offset++;
             }
 
@@ -110,9 +104,9 @@ public:
             parser->GetSpeedNum(static_cast<uint16_t>(data[offset % size] % MAX_QUERY_COUNT));
         }
 
-        for (const auto& type : queryTypes) {
-            parser->GetAveragePowerMa(type);
-            parser->GetAveragePowerMa(type, static_cast<uint16_t>(MAX_LEVEL));
+        for (size_t i = 0; i < QUERY_TYPE_COUNT; i++) {
+            parser->GetAveragePowerMa(QUERY_TYPES[i]);
+            parser->GetAveragePowerMa(QUERY_TYPES[i], static_cast<uint16_t>(MAX_LEVEL));
         }
     }
 };

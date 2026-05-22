@@ -40,7 +40,9 @@ T ReadValue(const uint8_t* data, size_t size, size_t& offset)
     if (data == nullptr || offset + sizeof(T) > size) {
         return value;
     }
-    (void)memcpy_s(&value, sizeof(T), data + offset, sizeof(T));
+    if (memcpy_s(&value, sizeof(T), data + offset, sizeof(T)) != 0) {
+        return value;
+    }
     offset += sizeof(T);
     return value;
 }

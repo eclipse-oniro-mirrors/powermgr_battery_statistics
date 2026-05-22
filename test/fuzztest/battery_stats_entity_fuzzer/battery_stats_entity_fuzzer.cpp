@@ -57,7 +57,9 @@ T ReadValue(const uint8_t* data, size_t size, size_t& offset)
     if (data == nullptr || offset + sizeof(T) > size) {
         return value;
     }
-    (void)memcpy_s(&value, sizeof(T), data + offset, sizeof(T));
+    if (memcpy_s(&value, sizeof(T), data + offset, sizeof(T)) != 0) {
+        return value;
+    }
     offset += sizeof(T);
     return value;
 }
@@ -140,10 +142,18 @@ void ExerciseCounter(const std::shared_ptr<StatsHelper::Counter>& counter, int64
 }
 } // namespace
 
+struct EntityFuzzParams {
+    int32_t uid;
+    int32_t userId;
+    int16_t level;
+    int64_t powerDelta;
+    std::string deviceId;
+    StatsUtils::StatsType statsType;
+};
+
 class BatteryStatsEntityFuzzer {
 public:
-    void FuzzEntities(int32_t uid, int32_t userId, int16_t level, int64_t powerDelta,
-        const std::string& deviceId, StatsUtils::StatsType statsType)
+    void FuzzEntities(const EntityFuzzParams& params)
     {
         for (const auto& entity : BuildEntities()) {
             if (entity == nullptr) {
@@ -151,23 +161,24 @@ public:
             }
 
             std::string dumpResult;
-            entity->Calculate(uid);
-            (void)entity->GetEntityPowerMah(uid);
-            (void)entity->GetStatsPowerMah(statsType, uid);
-            (void)entity->GetActiveTimeMs(statsType, level);
-            (void)entity->GetActiveTimeMs(uid, statsType, level);
-            (void)entity->GetTrafficByte(statsType, uid);
-            (void)entity->GetConsumptionCount(statsType, uid);
-            (void)entity->GetOrCreateTimer(statsType, level);
-            ExerciseTimer(entity->GetOrCreateTimer(uid, statsType, level), powerDelta);
-            ExerciseTimer(entity->GetOrCreateTimer(deviceId, uid, statsType, level), powerDelta);
-            ExerciseCounter(entity->GetOrCreateCounter(statsType, uid), powerDelta);
-            entity->AggregateUserPowerMah(userId, static_cast<double>(powerDelta));
-            entity->UpdateUidMap(uid);
-            (void)entity->GetCpuTimeMs(uid);
+            entity->Calculate(params.uid);
+            (void)entity->GetEntityPowerMah(params.uid);
+            (void)entity->GetStatsPowerMah(params.statsType, params.uid);
+            (void)entity->GetActiveTimeMs(params.statsType, params.level);
+            (void)entity->GetActiveTimeMs(params.uid, params.statsType, params.level);
+            (void)entity->GetTrafficByte(params.statsType, params.uid);
+            (void)entity->GetConsumptionCount(params.statsType, params.uid);
+            (void)entity->GetOrCreateTimer(params.statsType, params.level);
+            ExerciseTimer(entity->GetOrCreateTimer(params.uid, params.statsType, params.level), params.powerDelta);
+            ExerciseTimer(entity->GetOrCreateTimer(
+                params.deviceId, params.uid, params.statsType, params.level), params.powerDelta);
+            ExerciseCounter(entity->GetOrCreateCounter(params.statsType, params.uid), params.powerDelta);
+            entity->AggregateUserPowerMah(params.userId, static_cast<double>(params.powerDelta));
+            entity->UpdateUidMap(params.uid);
+            (void)entity->GetCpuTimeMs(params.uid);
             entity->UpdateCpuTime();
             (void)entity->GetUids();
-            entity->DumpInfo(dumpResult, uid);
+            entity->DumpInfo(dumpResult, params.uid);
             (void)entity->GetConsumptionType();
             entity->Reset();
         }
@@ -182,27 +193,28 @@ public:
         BatteryStatsEntity::ResetStatsEntity();
 
         size_t offset = 0;
-        int32_t uid = ReadValue<int32_t>(data, size, offset);
-        int32_t userId = ReadValue<int32_t>(data, size, offset);
-        int16_t level = static_cast<int16_t>(ReadValue<uint8_t>(data, size, offset));
-        int64_t powerDelta = ReadValue<int64_t>(data, size, offset);
-        std::string deviceId = ReadString(data, size, offset);
-        StatsUtils::StatsType statsType = ToStatsType(data[0]);
+        EntityFuzzParams params;
+        params.uid = ReadValue<int32_t>(data, size, offset);
+        params.userId = ReadValue<int32_t>(data, size, offset);
+        params.level = static_cast<int16_t>(ReadValue<uint8_t>(data, size, offset));
+        params.powerDelta = ReadValue<int64_t>(data, size, offset);
+        params.deviceId = ReadString(data, size, offset);
+        params.statsType = ToStatsType(data[0]);
         BatteryStatsInfo::ConsumptionType consumptionType = ToConsumptionType(data[0]);
-        BatteryStatsInfo::ConsumptionType invalidConsumptionType = ToInvalidConsumptionType(data[0]);
+        BatteryStatsInfo::ConsumptionType invalidType = ToInvalidConsumptionType(data[0]);
 
         auto info = std::make_shared<BatteryStatsInfo>();
-        info->SetUid(uid);
-        info->SetUserId(userId);
+        info->SetUid(params.uid);
+        info->SetUserId(params.userId);
         info->SetConsumptioType(consumptionType);
-        info->SetPower(static_cast<double>(powerDelta));
+        info->SetPower(static_cast<double>(params.powerDelta));
         BatteryStatsEntity::UpdateStatsInfoList(info);
         (void)BatteryStatsEntity::GetStatsInfoList();
         (void)BatteryStatsEntity::GetTotalPowerMah();
         (void)BatteryStatsInfo::ConvertConsumptionType(consumptionType);
-        (void)BatteryStatsInfo::ConvertConsumptionType(invalidConsumptionType);
+        (void)BatteryStatsInfo::ConvertConsumptionType(invalidType);
 
-        FuzzEntities(uid, userId, level, powerDelta, deviceId, statsType);
+        FuzzEntities(params);
         BatteryStatsEntity::ResetStatsEntity();
     }
 };
