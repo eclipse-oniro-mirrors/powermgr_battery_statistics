@@ -32,7 +32,6 @@ constexpr size_t MIN_INPUT_SIZE = sizeof(uint32_t);
 constexpr size_t MAX_STRING_BYTES = 32;
 constexpr size_t MAX_ARG_COUNT = 8;
 constexpr size_t STATS_TYPE_COUNT = 30;
-constexpr size_t STATS_STATE_COUNT = 5;
 constexpr size_t CONSUMPTION_TYPE_COUNT = 17;
 
 template<typename T>
@@ -67,11 +66,6 @@ std::string ReadString(const uint8_t* data, size_t size, size_t& offset)
 StatsUtils::StatsType ToStatsType(uint8_t raw)
 {
     return static_cast<StatsUtils::StatsType>(static_cast<int32_t>(raw % STATS_TYPE_COUNT) - 1);
-}
-
-StatsUtils::StatsState ToStatsState(uint8_t raw)
-{
-    return static_cast<StatsUtils::StatsState>(static_cast<int32_t>(raw % STATS_STATE_COUNT) - 1);
 }
 
 BatteryStatsInfo::ConsumptionType ToConsumptionType(uint8_t raw)
