@@ -57,9 +57,7 @@ T ReadValue(const uint8_t* data, size_t size, size_t& offset)
     if (data == nullptr || offset + sizeof(T) > size) {
         return value;
     }
-    if (memcpy_s(&value, sizeof(T), data + offset, sizeof(T)) != 0) {
-        return value;
-    }
+    value = *reinterpret_cast<const T*>(data + offset);
     offset += sizeof(T);
     return value;
 }
