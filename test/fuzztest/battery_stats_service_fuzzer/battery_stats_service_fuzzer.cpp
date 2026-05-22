@@ -42,7 +42,7 @@ T ReadValue(const uint8_t* data, size_t size, size_t& offset)
     if (data == nullptr || offset + sizeof(T) > size) {
         return value;
     }
-    (void)memcpy(&value, data + offset, sizeof(T));
+    (void)memcpy_s(&value, sizeof(T), data + offset, sizeof(T));
     offset += sizeof(T);
     return value;
 }
@@ -137,17 +137,10 @@ public:
         }
     }
 
-    void Fuzz(const uint8_t* data, size_t size)
+    void FuzzServiceStub(const uint8_t* data, size_t size, size_t& offset,
+        const std::vector<std::string>& args, const std::vector<std::u16string>& u16Args)
     {
-        if (data == nullptr || size < MIN_INPUT_SIZE) {
-            return;
-        }
-
-        size_t offset = 0;
-        auto args = BuildArgs(data, size);
-        auto u16Args = BuildU16Args(args);
         std::string deviceId = ReadString(data, size, offset);
-
         service_->OnAddSystemAbility(ReadValue<int32_t>(data, size, offset), deviceId);
         service_->OnAddSystemAbility(static_cast<int32_t>(data[0]), ReadString(data, size, offset));
         service_->IsServiceReady();
@@ -161,7 +154,11 @@ public:
 
         int32_t fd = -1;
         (void)service_->Dump(fd, u16Args);
+    }
 
+    void FuzzIpcAndCore(const uint8_t* data, size_t size, size_t& offset,
+        const std::string& deviceId)
+    {
         ParcelableBatteryStatsList batteryStats;
         int32_t tempError = 0;
         int32_t uid = ReadValue<int32_t>(data, size, offset);
@@ -179,8 +176,10 @@ public:
         (void)service_->GetAppStatsMahIpc(uid, appStatsMah, tempError);
         (void)service_->GetAppStatsPercentIpc(uid, appStatsPercent, tempError);
         (void)service_->GetPartStatsMahIpc(static_cast<int32_t>(consumptionType), partStatsMah, tempError);
-        (void)service_->GetPartStatsPercentIpc(static_cast<int32_t>(consumptionType), partStatsPercent, tempError);
-        (void)service_->GetPartStatsMahIpc(static_cast<int32_t>(invalidConsumptionType), partStatsMah, tempError);
+        (void)service_->GetPartStatsPercentIpc(
+            static_cast<int32_t>(consumptionType), partStatsPercent, tempError);
+        (void)service_->GetPartStatsMahIpc(
+            static_cast<int32_t>(invalidConsumptionType), partStatsMah, tempError);
         (void)service_->GetPartStatsPercentIpc(
             static_cast<int32_t>(invalidConsumptionType), partStatsPercent, tempError);
         (void)service_->GetTotalTimeSecondIpc(static_cast<int32_t>(statsType), uid, totalTimeSecond);
@@ -208,6 +207,20 @@ public:
             core->GetDebugInfo(result);
             core->Reset();
         }
+    }
+
+    void Fuzz(const uint8_t* data, size_t size)
+    {
+        if (data == nullptr || size < MIN_INPUT_SIZE) {
+            return;
+        }
+
+        size_t offset = 0;
+        auto args = BuildArgs(data, size);
+        auto u16Args = BuildU16Args(args);
+
+        FuzzServiceStub(data, size, offset, args, u16Args);
+        FuzzIpcAndCore(data, size, offset, ReadString(data, size, offset));
     }
 
 private:

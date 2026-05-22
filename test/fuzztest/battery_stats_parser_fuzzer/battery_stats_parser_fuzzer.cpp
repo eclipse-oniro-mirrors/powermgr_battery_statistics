@@ -91,6 +91,9 @@ public:
         parser->DumpInfo(result);
 
         auto queryTypes = BuildQueryTypes();
+        if (queryTypes.empty()) {
+            return;
+        }
         size_t offset = 0;
         size_t iterations = 0;
         while (offset < size && iterations < MAX_LOOP_ITERATIONS) {
