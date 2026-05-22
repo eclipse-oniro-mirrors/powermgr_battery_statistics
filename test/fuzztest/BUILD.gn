@@ -33,5 +33,10 @@ group("fuzztest") {
     "reset_fuzzer:ResetFuzzTest",
     "statshelper_fuzzer:StatsHelperFuzzTest",
     "statscjsonutils_fuzzer:StatsCjsonUtilsFuzzTest",
+    "battery_stats_service_fuzzer:BatteryStatsServiceFuzzTest",
+    "battery_stats_parser_fuzzer:BatteryStatsParserFuzzTest",
+    "battery_stats_detector_fuzzer:BatteryStatsDetectorFuzzTest",
+    "battery_stats_dumper_fuzzer:BatteryStatsDumperFuzzTest",
+    "battery_stats_entity_fuzzer:BatteryStatsEntityFuzzTest",
   ]
 }
