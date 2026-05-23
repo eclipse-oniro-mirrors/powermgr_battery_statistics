@@ -104,7 +104,8 @@
 
         "//base/powermgr/battery_statistics/test/fuzztest/batterystatsclient_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/getcount_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/reset_fuzzer:fuzztest"
+        "//base/powermgr/battery_statistics/test/fuzztest/reset_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/LXJBattery_fuzzer:fuzztest"
 
       ]
     }
