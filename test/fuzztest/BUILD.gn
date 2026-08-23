@@ -20,6 +20,10 @@ group("fuzztest") {
 
   deps += [
     # deps file
+    "batterystatsserviceipc_fuzzer:fuzztest",
+    "cputimereader_fuzzer:fuzztest",
+    "detector_fuzzer:fuzztest",
+    "entity_power_matrix_fuzzer:fuzztest",
     "getappstatsmah_fuzzer:GetAppStatsMahFuzzTest",
     "getappstatspercent_fuzzer:GetAppStatsPercentFuzzTest",
     "getbatterystats_fuzzer:GetBatteryStatsFuzzTest",
@@ -28,9 +32,13 @@ group("fuzztest") {
     "getpartstatspercent_fuzzer:GetPartStatsPercentFuzzTest",
     "gettotaldatabytes_fuzzer:GetTotalDataBytesFuzzTest",
     "gettotaltimesecond_fuzzer:GetTotalTimeSecondFuzzTest",
+    "listener_parse_matrix_fuzzer:fuzztest",
+    "parser_array_matrix_fuzzer:fuzztest",
     "resetdump_fuzzer:ResetDumpFuzzTest",
     "setonbattery_fuzzer:SetOnBatteryFuzzTest",
     "reset_fuzzer:ResetFuzzTest",
+    "statscore_jsonstate_fuzzer:fuzztest",
+    "subscriber_event_fuzzer:fuzztest",
     "statshelper_fuzzer:StatsHelperFuzzTest",
     "statscjsonutils_fuzzer:StatsCjsonUtilsFuzzTest",
   ]
