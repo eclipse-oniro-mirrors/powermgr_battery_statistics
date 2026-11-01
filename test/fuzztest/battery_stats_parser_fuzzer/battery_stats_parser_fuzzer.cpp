@@ -76,17 +76,21 @@ std::string ReadString(const uint8_t* data, size_t size, size_t& offset)
 
 class BatteryStatsParserFuzzer {
 public:
+    // The parser is created once: Init() parses the power profile, doing it per input would slow the fuzzer down
+    BatteryStatsParserFuzzer()
+    {
+        parser_ = std::make_shared<BatteryStatsParser>();
+        (void)parser_->Init();
+    }
+
     void Fuzz(const uint8_t* data, size_t size)
     {
         if (data == nullptr || size < MIN_INPUT_SIZE) {
             return;
         }
 
-        auto parser = std::make_shared<BatteryStatsParser>();
-        (void)parser->Init();
-
         std::string result;
-        parser->DumpInfo(result);
+        parser_->DumpInfo(result);
 
         size_t safeSize = (size > 0) ? size : 1;
         size_t offset = 0;
@@ -99,17 +103,26 @@ public:
                 offset++;
             }
 
-            parser->GetAveragePowerMa(type);
-            parser->GetAveragePowerMa(type, static_cast<uint16_t>(data[offset % safeSize] % MAX_LEVEL));
-            parser->GetClusterNum();
-            parser->GetSpeedNum(static_cast<uint16_t>(data[offset % safeSize] % MAX_QUERY_COUNT));
+            BuildPowerLevels(type);
+            (void)parser_->GetClusterNum();
+            (void)parser_->GetSpeedNum(static_cast<uint16_t>(data[offset % safeSize] % MAX_QUERY_COUNT));
         }
 
         for (size_t i = 0; i < QUERY_TYPE_COUNT; i++) {
-            parser->GetAveragePowerMa(QUERY_TYPES[i]);
-            parser->GetAveragePowerMa(QUERY_TYPES[i], static_cast<uint16_t>(MAX_LEVEL));
+            BuildPowerLevels(QUERY_TYPES[i]);
         }
     }
+
+private:
+    void BuildPowerLevels(const std::string& type)
+    {
+        (void)parser_->GetAveragePowerMa(type);
+        for (uint16_t level = 0; level < MAX_LEVEL; level++) {
+            (void)parser_->GetAveragePowerMa(type, level);
+        }
+    }
+
+    std::shared_ptr<BatteryStatsParser> parser_ = nullptr;
 };
 
 namespace {

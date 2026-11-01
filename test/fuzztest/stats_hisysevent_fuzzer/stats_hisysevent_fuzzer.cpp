@@ -15,16 +15,22 @@
 
 #define FUZZ_PROJECT_NAME "stats_hisysevent_fuzzer"
 
-#include "stats_hisysevent.h"
 #include <cstddef>
 #include <cstdint>
 #include <string>
+
+#include "stats_hisysevent.h"
 
 using namespace OHOS::PowerMgr;
 
 namespace {
 constexpr size_t MAX_EVENT_NAME_LEN = 64;
+
+void CheckOneEvent(const std::string& eventName)
+{
+    (void)StatsHiSysEvent::CheckHiSysEvent(eventName);
 }
+} // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -36,16 +42,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     size_t len = (size > MAX_EVENT_NAME_LEN) ? MAX_EVENT_NAME_LEN : size;
     std::string eventName(reinterpret_cast<const char*>(data), len);
 
-    // Test CheckHiSysEvent with fuzzed event name
-    StatsHiSysEvent::CheckHiSysEvent(eventName);
+    // Cover the fuzz driven event name
+    CheckOneEvent(eventName);
 
-    // Also test with empty string and known valid names for coverage
-    StatsHiSysEvent::CheckHiSysEvent("");
-    StatsHiSysEvent::CheckHiSysEvent("RUNNINGLOCK");
-    StatsHiSysEvent::CheckHiSysEvent("SCREEN_STATE");
-    StatsHiSysEvent::CheckHiSysEvent("CHANGED");
-    StatsHiSysEvent::CheckHiSysEvent("CALL_STATE");
-    StatsHiSysEvent::CheckHiSysEvent("DATA_CONNECTION_STATE");
+    // Cover the empty name and every registered HiSysEvent name
+    CheckOneEvent(std::string());
+    for (int32_t i = 0; i < StatsHiSysEvent::HISYSEVENT_TYPE_END; i++) {
+        CheckOneEvent(StatsHiSysEvent::HISYSEVENT_LIST[i]);
+    }
 
     return 0;
 }

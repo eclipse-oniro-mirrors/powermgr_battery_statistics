@@ -11,14 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../batterystats.gni")
 
+module_output_path = "battery_statistics/battery_statistics"
+
+##############################fuzztest##########################################
 ohos_fuzztest("StatsConverttypeFuzzTest") {
-  module_out_path = "battery_statistics/battery_statistics"
+  module_out_path = module_output_path
+  fuzz_config_file =
+      "${batterystats_root_path}/test/fuzztest/stats_converttype_fuzzer"
 
   include_dirs = [
+    "./",
     "${batterystats_utils_path}/native/include",
   ]
 
@@ -31,7 +36,7 @@ ohos_fuzztest("StatsConverttypeFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [ "stats_converttype_fuzzer.cpp" ]
+  sources = [ "./stats_converttype_fuzzer.cpp" ]
 
   deps = [ "${batterystats_utils_path}:batterystats_utils" ]
 
@@ -44,8 +49,5 @@ ohos_fuzztest("StatsConverttypeFuzzTest") {
 ###############################################################################
 group("fuzztest") {
   testonly = true
-  deps = [
-    ":StatsConverttypeFuzzTest",
-  ]
+  deps = [ ":StatsConverttypeFuzzTest" ]
 }
-###############################################################################

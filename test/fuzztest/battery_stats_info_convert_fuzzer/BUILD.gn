@@ -11,17 +11,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/config/features.gni")
 import("//build/test.gni")
-import("//base/powermgr/battery_statistics/batterystats.gni")
+import("../../../batterystats.gni")
 
+module_output_path = "battery_statistics/battery_statistics"
+
+##############################fuzztest##########################################
 ohos_fuzztest("BatteryStatsInfoConvertFuzzTest") {
-  module_out_path = "battery_statistics/battery_statistics"
+  module_out_path = module_output_path
+  fuzz_config_file =
+      "${batterystats_root_path}/test/fuzztest/battery_stats_info_convert_fuzzer"
 
   include_dirs = [
+    "./",
     "${batterystats_inner_api}/include",
     "${batterystats_utils_path}/native/include",
   ]
+
+  configs = [ "${batterystats_utils_path}:coverage_flags" ]
 
   cflags = [
     "-g",
@@ -30,7 +37,7 @@ ohos_fuzztest("BatteryStatsInfoConvertFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [ "battery_stats_info_convert_fuzzer.cpp" ]
+  sources = [ "./battery_stats_info_convert_fuzzer.cpp" ]
 
   deps = [
     "${batterystats_inner_api}:batterystats_client",
@@ -40,14 +47,12 @@ ohos_fuzztest("BatteryStatsInfoConvertFuzzTest") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "ipc:ipc_core",
   ]
 }
 
 ###############################################################################
 group("fuzztest") {
   testonly = true
-  deps = [
-    ":BatteryStatsInfoConvertFuzzTest",
-  ]
+  deps = [ ":BatteryStatsInfoConvertFuzzTest" ]
 }
-###############################################################################

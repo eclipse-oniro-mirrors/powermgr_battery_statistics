@@ -15,22 +15,30 @@
 
 #define FUZZ_PROJECT_NAME "battery_stats_info_convert_fuzzer"
 
-#include "battery_stats_info.h"
 #include <cstddef>
 #include <cstdint>
+#include <string>
+
+#include "battery_stats_info.h"
 
 using namespace OHOS::PowerMgr;
 
 namespace {
-// ConsumptionType enum values range from -17 (INVALID) to -1 (ALARM)
-constexpr int32_t CONSUMPTION_TYPE_MIN = -17;
-constexpr int32_t CONSUMPTION_TYPE_MAX = -1;
-constexpr size_t CONSUMPTION_TYPE_COUNT = 17; // Total number of enum values
+// ConsumptionType enumerators range from CONSUMPTION_TYPE_INVALID (-17) to CONSUMPTION_TYPE_ALARM (-1)
+constexpr int32_t CONSUMPTION_TYPE_MIN = static_cast<int32_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID);
+constexpr int32_t CONSUMPTION_TYPE_MAX = static_cast<int32_t>(BatteryStatsInfo::CONSUMPTION_TYPE_ALARM);
+constexpr uint32_t CONSUMPTION_TYPE_RANGE =
+    static_cast<uint32_t>(CONSUMPTION_TYPE_MAX - CONSUMPTION_TYPE_MIN + 1);
 
 BatteryStatsInfo::ConsumptionType ToConsumptionType(uint8_t raw)
 {
-    int32_t index = static_cast<int32_t>(raw) % static_cast<uint8_t>(CONSUMPTION_TYPE_COUNT);
-    return static_cast<BatteryStatsInfo::ConsumptionType>(CONSUMPTION_TYPE_MIN + index);
+    uint32_t offset = static_cast<uint32_t>(raw) % CONSUMPTION_TYPE_RANGE;
+    return static_cast<BatteryStatsInfo::ConsumptionType>(CONSUMPTION_TYPE_MIN + static_cast<int32_t>(offset));
+}
+
+void ConvertOneType(BatteryStatsInfo::ConsumptionType type)
+{
+    (void)BatteryStatsInfo::ConvertConsumptionType(type);
 }
 } // namespace
 
@@ -40,19 +48,19 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return 0;
     }
 
-    // Test ConvertConsumptionType with fuzz-driven enum values
-    for (size_t i = 0; i < size && i < CONSUMPTION_TYPE_COUNT; i++) {
-        BatteryStatsInfo::ConsumptionType type = ToConsumptionType(data[i]);
-        std::string result = BatteryStatsInfo::ConvertConsumptionType(type);
-        (void)result;
+    // Cover the enum values driven by the fuzz input
+    for (size_t i = 0; i < size && i < CONSUMPTION_TYPE_RANGE; i++) {
+        ConvertOneType(ToConsumptionType(data[i]));
     }
 
-    // Exhaustively test all valid enum values for full coverage
+    // Exhaustively cover every valid enum value
     for (int32_t i = CONSUMPTION_TYPE_MIN; i <= CONSUMPTION_TYPE_MAX; i++) {
-        BatteryStatsInfo::ConsumptionType type =
-            static_cast<BatteryStatsInfo::ConsumptionType>(i);
-        std::string result = BatteryStatsInfo::ConvertConsumptionType(type);
-        (void)result;
+        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(i));
+    }
+
+    // Cover the out of range values that the switch statement must reject
+    for (int32_t i = 0; i <= static_cast<int32_t>(CONSUMPTION_TYPE_RANGE); i++) {
+        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(i));
     }
 
     return 0;

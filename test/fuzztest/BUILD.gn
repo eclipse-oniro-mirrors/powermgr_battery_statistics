@@ -40,6 +40,6 @@ group("fuzztest") {
     "battery_stats_entity_fuzzer:BatteryStatsEntityFuzzTest",
     "battery_stats_info_convert_fuzzer:BatteryStatsInfoConvertFuzzTest",
     "stats_converttype_fuzzer:StatsConverttypeFuzzTest",
-    "stats_hisysevent_fuzzer:StatsHiSysEventFuzzTest",
+    "stats_hisysevent_fuzzer:StatsHiSysEventFuzzTest"
   ]
 }

@@ -96,9 +96,10 @@ BatteryStatsInfo::ConsumptionType ToInvalidConsumptionType(uint8_t raw)
         -static_cast<int32_t>(raw % CONSUMPTION_TYPE_COUNT) - 1);
 }
 
-std::vector<std::shared_ptr<BatteryStatsEntity>> BuildEntities()
+// Entities are created once: building them per input would repeat /proc parsing and slow the fuzzer down
+const std::vector<std::shared_ptr<BatteryStatsEntity>>& GetEntities()
 {
-    return {
+    static const std::vector<std::shared_ptr<BatteryStatsEntity>> entities = {
         std::make_shared<AudioEntity>(),
         std::make_shared<BluetoothEntity>(),
         std::make_shared<CameraEntity>(),
@@ -115,6 +116,7 @@ std::vector<std::shared_ptr<BatteryStatsEntity>> BuildEntities()
         std::make_shared<WifiEntity>(),
         std::make_shared<AlarmEntity>()
     };
+    return entities;
 }
 
 void ExerciseTimer(const std::shared_ptr<StatsHelper::ActiveTimer>& timer, int64_t delta)
@@ -153,7 +155,7 @@ class BatteryStatsEntityFuzzer {
 public:
     void FuzzEntities(const EntityFuzzParams& params)
     {
-        for (const auto& entity : BuildEntities()) {
+        for (const auto& entity : GetEntities()) {
             if (entity == nullptr) {
                 continue;
             }
@@ -219,7 +221,7 @@ public:
 
 namespace {
 BatteryStatsEntityFuzzer g_fuzzer;
-}
+} // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {

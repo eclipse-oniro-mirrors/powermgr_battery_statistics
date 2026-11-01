@@ -110,7 +110,10 @@
         "//base/powermgr/battery_statistics/test/fuzztest/battery_stats_dumper_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/battery_stats_entity_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/battery_stats_parser_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/battery_stats_service_fuzzer:fuzztest"
+        "//base/powermgr/battery_statistics/test/fuzztest/battery_stats_service_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/battery_stats_info_convert_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/stats_converttype_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/stats_hisysevent_fuzzer:fuzztest"
 
       ]
     }

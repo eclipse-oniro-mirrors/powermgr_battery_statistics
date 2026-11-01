@@ -15,15 +15,17 @@
 
 #define FUZZ_PROJECT_NAME "battery_stats_service_fuzzer"
 
-#include "battery_stats_service.h"
-#include "battery_stats_info.h"
-#include "stats_utils.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
+
+#include "battery_stats_core.h"
+#include "battery_stats_info.h"
+#include "battery_stats_service.h"
+#include "stats_utils.h"
 
 using namespace OHOS::PowerMgr;
 
@@ -31,8 +33,16 @@ namespace {
 constexpr size_t MIN_INPUT_SIZE = sizeof(uint32_t);
 constexpr size_t MAX_STRING_BYTES = 32;
 constexpr size_t MAX_ARG_COUNT = 8;
-constexpr size_t STATS_TYPE_COUNT = 30;
-constexpr size_t CONSUMPTION_TYPE_COUNT = 17;
+constexpr uint32_t STATS_TYPE_COUNT = 30;
+constexpr uint32_t CONSUMPTION_TYPE_COUNT = 17;
+constexpr uint32_t ON_BATTERY_MASK = 0x01;
+
+struct QueryParams {
+    int32_t uid = StatsUtils::INVALID_VALUE;
+    StatsUtils::StatsType statsType = StatsUtils::STATS_TYPE_INVALID;
+    BatteryStatsInfo::ConsumptionType consumptionType = BatteryStatsInfo::CONSUMPTION_TYPE_INVALID;
+    BatteryStatsInfo::ConsumptionType outOfRangeType = BatteryStatsInfo::CONSUMPTION_TYPE_INVALID;
+};
 
 template<typename T>
 T ReadValue(const uint8_t* data, size_t size, size_t& offset)
@@ -68,16 +78,18 @@ StatsUtils::StatsType ToStatsType(uint8_t raw)
     return static_cast<StatsUtils::StatsType>(static_cast<int32_t>(raw % STATS_TYPE_COUNT) - 1);
 }
 
-BatteryStatsInfo::ConsumptionType ToConsumptionType(uint8_t raw)
-{
-    return static_cast<BatteryStatsInfo::ConsumptionType>(
-        static_cast<int32_t>(raw % CONSUMPTION_TYPE_COUNT));
-}
-
-BatteryStatsInfo::ConsumptionType ToInvalidConsumptionType(uint8_t raw)
+// Produces a value that is a legal enumerator, so the switch statement takes a real branch
+BatteryStatsInfo::ConsumptionType ToValidConsumptionType(uint8_t raw)
 {
     return static_cast<BatteryStatsInfo::ConsumptionType>(
         -static_cast<int32_t>(raw % CONSUMPTION_TYPE_COUNT) - 1);
+}
+
+// Produces a value outside the enumerator range, so the default branch is exercised
+BatteryStatsInfo::ConsumptionType ToOutOfRangeConsumptionType(uint8_t raw)
+{
+    return static_cast<BatteryStatsInfo::ConsumptionType>(
+        static_cast<int32_t>(raw % CONSUMPTION_TYPE_COUNT));
 }
 
 std::vector<std::string> BuildArgs(const uint8_t* data, size_t size)
@@ -131,16 +143,31 @@ public:
         }
     }
 
-    void FuzzServiceStub(const uint8_t* data, size_t size, size_t& offset,
-        const std::vector<std::string>& args, const std::vector<std::u16string>& u16Args)
+    void Fuzz(const uint8_t* data, size_t size)
+    {
+        if (data == nullptr || size < MIN_INPUT_SIZE) {
+            return;
+        }
+
+        size_t offset = 0;
+        std::vector<std::string> args = BuildArgs(data, size);
+        std::vector<std::u16string> u16Args = BuildU16Args(args);
+
+        FuzzServiceStub(data, size, offset, args, u16Args);
+        FuzzIpcAndCore(data, size, offset, ReadString(data, size, offset));
+    }
+
+private:
+    void FuzzServiceStub(const uint8_t* data, size_t size, size_t& offset, const std::vector<std::string>& args,
+        const std::vector<std::u16string>& u16Args)
     {
         std::string deviceId = ReadString(data, size, offset);
         service_->OnAddSystemAbility(ReadValue<int32_t>(data, size, offset), deviceId);
         service_->OnAddSystemAbility(static_cast<int32_t>(data[0]), ReadString(data, size, offset));
-        service_->IsServiceReady();
-        service_->GetBatteryStatsCore();
-        service_->GetBatteryStatsParser();
-        service_->GetBatteryStatsDetector();
+        (void)service_->IsServiceReady();
+        (void)service_->GetBatteryStatsCore();
+        (void)service_->GetBatteryStatsParser();
+        (void)service_->GetBatteryStatsDetector();
 
         std::vector<std::string> shellArgs = args;
         std::string shellDump = service_->ShellDump(shellArgs, static_cast<uint32_t>(shellArgs.size()));
@@ -150,80 +177,76 @@ public:
         (void)service_->Dump(fd, u16Args);
     }
 
-    void FuzzIpcAndCore(const uint8_t* data, size_t size, size_t& offset,
-        const std::string& deviceId)
+    void FuzzIpcAndCore(const uint8_t* data, size_t size, size_t& offset, const std::string& deviceId)
+    {
+        QueryParams params;
+        params.uid = ReadValue<int32_t>(data, size, offset);
+        params.statsType = ToStatsType(data[0]);
+        params.consumptionType = ToValidConsumptionType(data[0]);
+        params.outOfRangeType = ToOutOfRangeConsumptionType(data[0]);
+
+        FuzzIpcGetters(params);
+        FuzzCoreQueries(params, deviceId);
+    }
+
+    void FuzzIpcGetters(const QueryParams& params)
     {
         ParcelableBatteryStatsList batteryStats;
         int32_t tempError = 0;
-        int32_t uid = ReadValue<int32_t>(data, size, offset);
-        uint64_t totalTimeSecond = 0;
-        uint64_t totalDataBytes = 0;
         double appStatsMah = 0.0;
         double appStatsPercent = 0.0;
         double partStatsMah = 0.0;
         double partStatsPercent = 0.0;
-        StatsUtils::StatsType statsType = ToStatsType(data[0]);
-        BatteryStatsInfo::ConsumptionType consumptionType = ToConsumptionType(data[0]);
-        BatteryStatsInfo::ConsumptionType invalidConsumptionType = ToInvalidConsumptionType(data[0]);
+        uint64_t totalTimeSecond = 0;
+        uint64_t totalDataBytes = 0;
 
         (void)service_->GetBatteryStatsIpc(batteryStats, tempError);
-        (void)service_->GetAppStatsMahIpc(uid, appStatsMah, tempError);
-        (void)service_->GetAppStatsPercentIpc(uid, appStatsPercent, tempError);
-        (void)service_->GetPartStatsMahIpc(static_cast<int32_t>(consumptionType), partStatsMah, tempError);
+        (void)service_->GetAppStatsMahIpc(params.uid, appStatsMah, tempError);
+        (void)service_->GetAppStatsPercentIpc(params.uid, appStatsPercent, tempError);
+        (void)service_->GetPartStatsMahIpc(static_cast<int32_t>(params.consumptionType), partStatsMah, tempError);
         (void)service_->GetPartStatsPercentIpc(
-            static_cast<int32_t>(consumptionType), partStatsPercent, tempError);
-        (void)service_->GetPartStatsMahIpc(
-            static_cast<int32_t>(invalidConsumptionType), partStatsMah, tempError);
+            static_cast<int32_t>(params.consumptionType), partStatsPercent, tempError);
+        (void)service_->GetPartStatsMahIpc(static_cast<int32_t>(params.outOfRangeType), partStatsMah, tempError);
         (void)service_->GetPartStatsPercentIpc(
-            static_cast<int32_t>(invalidConsumptionType), partStatsPercent, tempError);
-        (void)service_->GetTotalTimeSecondIpc(static_cast<int32_t>(statsType), uid, totalTimeSecond);
-        (void)service_->GetTotalDataBytesIpc(static_cast<int32_t>(statsType), uid, totalDataBytes);
+            static_cast<int32_t>(params.outOfRangeType), partStatsPercent, tempError);
+        (void)service_->GetTotalTimeSecondIpc(static_cast<int32_t>(params.statsType), params.uid, totalTimeSecond);
+        (void)service_->GetTotalDataBytesIpc(static_cast<int32_t>(params.statsType), params.uid, totalDataBytes);
         (void)service_->ResetIpc();
-        (void)service_->SetOnBatteryIpc((data[0] & 0x01) != 0);
-
-        auto core = service_->GetBatteryStatsCore();
-        if (core != nullptr) {
-            core->ComputePower();
-            std::string result;
-            core->DumpInfo(result);
-            core->GetBatteryStats();
-            core->GetAppStatsMah(uid);
-            core->GetAppStatsPercent(uid);
-            core->GetPartStatsMah(consumptionType);
-            core->GetPartStatsPercent(consumptionType);
-            core->GetPartStatsMah(invalidConsumptionType);
-            core->GetPartStatsPercent(invalidConsumptionType);
-            core->GetTotalTimeMs(statsType);
-            core->GetTotalTimeMs(uid, statsType);
-            core->GetTotalDataCount(statsType, uid);
-            core->GetTotalConsumptionCount(statsType, uid);
-            core->UpdateDebugInfo(deviceId);
-            core->GetDebugInfo(result);
-            core->Reset();
-        }
+        (void)service_->SetOnBatteryIpc((static_cast<uint32_t>(params.uid) & ON_BATTERY_MASK) != 0);
     }
 
-    void Fuzz(const uint8_t* data, size_t size)
+    void FuzzCoreQueries(const QueryParams& params, const std::string& deviceId)
     {
-        if (data == nullptr || size < MIN_INPUT_SIZE) {
+        std::shared_ptr<BatteryStatsCore> core = service_->GetBatteryStatsCore();
+        if (core == nullptr) {
             return;
         }
 
-        size_t offset = 0;
-        auto args = BuildArgs(data, size);
-        auto u16Args = BuildU16Args(args);
-
-        FuzzServiceStub(data, size, offset, args, u16Args);
-        FuzzIpcAndCore(data, size, offset, ReadString(data, size, offset));
+        std::string result;
+        core->ComputePower();
+        core->DumpInfo(result);
+        (void)core->GetBatteryStats();
+        (void)core->GetAppStatsMah(params.uid);
+        (void)core->GetAppStatsPercent(params.uid);
+        (void)core->GetPartStatsMah(params.consumptionType);
+        (void)core->GetPartStatsPercent(params.consumptionType);
+        (void)core->GetPartStatsMah(params.outOfRangeType);
+        (void)core->GetPartStatsPercent(params.outOfRangeType);
+        (void)core->GetTotalTimeMs(params.statsType);
+        (void)core->GetTotalTimeMs(params.uid, params.statsType);
+        (void)core->GetTotalDataCount(params.statsType, params.uid);
+        (void)core->GetTotalConsumptionCount(params.statsType, params.uid);
+        core->UpdateDebugInfo(deviceId);
+        core->GetDebugInfo(result);
+        core->Reset();
     }
 
-private:
     OHOS::sptr<BatteryStatsService> service_ = nullptr;
 };
 
 namespace {
 BatteryStatsServiceFuzzer g_fuzzer;
-}
+} // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
