@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include "stats_utils.h"
 #include "stats_helper.h"
@@ -61,6 +62,9 @@ public:
 protected:
     static double totalPowerMah_;
     static BatteryStatsInfoList statsInfoList_;
+    // Protects the static members above, which are shared by all entity instances and accessed
+    // from both CommonEvent and binder threads.
+    static std::mutex statsInfoListMutex_;
     BatteryStatsInfo::ConsumptionType consumptionType_ = BatteryStatsInfo::CONSUMPTION_TYPE_INVALID;
 };
 } // namespace PowerMgr

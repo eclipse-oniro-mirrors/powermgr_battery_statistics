@@ -67,7 +67,7 @@ void UserEntity::Calculate(int32_t uid)
         statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_USER);
         statsInfo->SetUserId(iter.first);
         statsInfo->SetPower(iter.second);
-        statsInfoList_.push_back(statsInfo);
+        UpdateStatsInfoList(statsInfo);
     }
 }
 

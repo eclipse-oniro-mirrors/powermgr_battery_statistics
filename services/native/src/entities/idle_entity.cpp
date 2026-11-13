@@ -50,11 +50,14 @@ void IdleEntity::Calculate(int32_t uid)
     auto cpuSuspendPower = CalculateCpuSuspendPower();
     auto cpuIdlePower = CalculateCpuIdlePower();
     idleTotalPowerMah_ = cpuSuspendPower + cpuIdlePower;
-    totalPowerMah_ += idleTotalPowerMah_;
+    {
+        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        totalPowerMah_ += idleTotalPowerMah_;
+    }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();
     statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_IDLE);
     statsInfo->SetPower(idleTotalPowerMah_);
-    statsInfoList_.push_back(statsInfo);
+    UpdateStatsInfoList(statsInfo);
 
     STATS_HILOGD(COMP_SVC, "Calculate idle total power consumption: %{public}lfmAh", idleTotalPowerMah_);
 }

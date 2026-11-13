@@ -68,12 +68,15 @@ void BluetoothEntity::CalculateBtPower()
     auto bluetoothUidPowerMah = GetBluetoothUidPower();
 
     bluetoothPowerMah_ = bluetoothBrOnPowerMah + bluetoothBleOnPowerMah + bluetoothUidPowerMah;
-    totalPowerMah_ += bluetoothPowerMah_;
+    {
+        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        totalPowerMah_ += bluetoothPowerMah_;
+    }
 
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();
     statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_BLUETOOTH);
     statsInfo->SetPower(bluetoothPowerMah_);
-    statsInfoList_.push_back(statsInfo);
+    UpdateStatsInfoList(statsInfo);
 
     STATS_HILOGD(COMP_SVC, "Calculate bluetooth Br time: %{public}" PRId64 "ms, Br power average: %{public}lfma,"    \
         "Br power consumption: %{public}lfmAh, bluetooth Ble time: %{public}" PRId64 "ms, "                          \
