@@ -20,7 +20,7 @@ namespace OHOS {
 namespace PowerMgr {
 double BatteryStatsEntity::totalPowerMah_ = StatsUtils::DEFAULT_VALUE;
 BatteryStatsInfoList BatteryStatsEntity::statsInfoList_;
-std::mutex BatteryStatsEntity::statsInfoListMutex_;
+std::mutex BatteryStatsEntity::statsMutex_;
 
 void BatteryStatsEntity::AggregateUserPowerMah(int32_t userId, double power)
 {
@@ -46,13 +46,13 @@ int64_t BatteryStatsEntity::GetConsumptionCount(StatsUtils::StatsType statsType,
 
 BatteryStatsInfoList BatteryStatsEntity::GetStatsInfoList()
 {
-    std::lock_guard<std::mutex> lock(statsInfoListMutex_);
+    std::lock_guard<std::mutex> lock(statsMutex_);
     return statsInfoList_;
 }
 
 void BatteryStatsEntity::UpdateStatsInfoList(std::shared_ptr<BatteryStatsInfo> info)
 {
-    std::lock_guard<std::mutex> lock(statsInfoListMutex_);
+    std::lock_guard<std::mutex> lock(statsMutex_);
     statsInfoList_.push_back(info);
 }
 
@@ -137,14 +137,14 @@ BatteryStatsInfo::ConsumptionType BatteryStatsEntity::GetConsumptionType()
 
 double BatteryStatsEntity::GetTotalPowerMah()
 {
-    std::lock_guard<std::mutex> lock(statsInfoListMutex_);
+    std::lock_guard<std::mutex> lock(statsMutex_);
     return totalPowerMah_;
 }
 
 void BatteryStatsEntity::ResetStatsEntity()
 {
     STATS_HILOGI(COMP_SVC, "Reset total consumption power and battery stats list");
-    std::lock_guard<std::mutex> lock(statsInfoListMutex_);
+    std::lock_guard<std::mutex> lock(statsMutex_);
     totalPowerMah_ = StatsUtils::DEFAULT_VALUE;
     statsInfoList_.clear();
 }

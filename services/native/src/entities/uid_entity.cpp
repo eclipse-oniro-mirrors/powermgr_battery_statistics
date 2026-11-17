@@ -130,7 +130,7 @@ void UidEntity::Calculate(int32_t uid)
         power += CalculateForCommon(iter.first);
         iter.second = power;
         {
-            std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+            std::lock_guard<std::mutex> statsLock(statsMutex_);
             totalPowerMah_ += power;
         }
         AddtoStatsList(iter.first, power);

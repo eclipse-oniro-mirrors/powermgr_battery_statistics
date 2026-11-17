@@ -51,7 +51,7 @@ void IdleEntity::Calculate(int32_t uid)
     auto cpuIdlePower = CalculateCpuIdlePower();
     idleTotalPowerMah_ = cpuSuspendPower + cpuIdlePower;
     {
-        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
         totalPowerMah_ += idleTotalPowerMah_;
     }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();

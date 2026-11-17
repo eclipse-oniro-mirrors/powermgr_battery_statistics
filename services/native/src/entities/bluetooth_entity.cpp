@@ -69,7 +69,7 @@ void BluetoothEntity::CalculateBtPower()
 
     bluetoothPowerMah_ = bluetoothBrOnPowerMah + bluetoothBleOnPowerMah + bluetoothUidPowerMah;
     {
-        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
         totalPowerMah_ += bluetoothPowerMah_;
     }
 

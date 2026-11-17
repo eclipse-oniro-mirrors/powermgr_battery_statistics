@@ -95,7 +95,7 @@ void ScreenEntity::Calculate(int32_t uid)
 
     screenPowerMah_ = (screenOnPowerMah + brightnessPowerMah) / StatsUtils::MS_IN_HOUR;
     {
-        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
         totalPowerMah_ += screenPowerMah_;
     }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();

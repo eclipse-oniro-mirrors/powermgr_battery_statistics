@@ -62,9 +62,9 @@ public:
 protected:
     static double totalPowerMah_;
     static BatteryStatsInfoList statsInfoList_;
-    // Protects the static members above, which are shared by all entity instances and accessed
-    // from both CommonEvent and binder threads.
-    static std::mutex statsInfoListMutex_;
+    // Protects the static members statsInfoList_ and totalPowerMah_, which are shared by all entity
+    // instances and accessed from both CommonEvent and binder threads.
+    static std::mutex statsMutex_;
     BatteryStatsInfo::ConsumptionType consumptionType_ = BatteryStatsInfo::CONSUMPTION_TYPE_INVALID;
 };
 } // namespace PowerMgr

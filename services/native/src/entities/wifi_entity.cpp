@@ -45,7 +45,7 @@ void WifiEntity::Calculate(int32_t uid)
 
     wifiPowerMah_ = wifiOnPowerMah + wifiScanPowerMah;
     {
-        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
         totalPowerMah_ += wifiPowerMah_;
     }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();

@@ -118,7 +118,7 @@ void PhoneEntity::Calculate(int32_t uid)
     }
     phonePowerMah_ = phoneOnPowerMah + phoneDataPowerMah;
     {
-        std::lock_guard<std::mutex> statsLock(statsInfoListMutex_);
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
         totalPowerMah_ += phonePowerMah_;
     }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();
