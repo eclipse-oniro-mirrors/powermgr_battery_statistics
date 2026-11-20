@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,8 @@
  */
 
 #include "subscriber_event_fuzzer.h"
+
+#include "../battery_fuzz_input.h"
 
 #include "battery_info.h"
 #include "battery_stats_core.h"
@@ -34,9 +36,7 @@ namespace OHOS {
 namespace PowerMgr {
 
 namespace {
-constexpr size_t BYTE_BITS = 8;
 constexpr size_t MIN_ITEM_COUNT = 1;
-constexpr size_t STRING_LENGTH_RANGE_OFFSET = 1;
 constexpr size_t MAX_EVENTS_PER_INPUT = 8;
 constexpr size_t MAX_STRING_LENGTH = 48;
 constexpr int32_t BATTERY_LEVEL_FULL = 100;
@@ -48,52 +48,7 @@ constexpr int32_t BATTERY_LEVEL_OVER_FULL = 101;
 constexpr int32_t INT32_MAX_EDGE_VALUE = std::numeric_limits<int32_t>::max();
 constexpr size_t CUSTOM_ACTION_SELECTOR_SLOT = 1;
 
-class FuzzReader {
-public:
-    FuzzReader(const uint8_t* data, size_t size) : data_(data), size_(size) {}
-
-    template <typename T>
-    T Read(T fallback = T())
-    {
-        if (Remaining() < sizeof(T)) {
-            return fallback;
-        }
-        uint64_t value = 0;
-        for (size_t index = 0; index < sizeof(T); ++index) {
-            value |= static_cast<uint64_t>(data_[offset_ + index]) << (BYTE_BITS * index);
-        }
-        offset_ += sizeof(T);
-        return static_cast<T>(value);
-    }
-
-    std::string ReadString(size_t maxLength)
-    {
-        if (Remaining() == 0) {
-            return "";
-        }
-        size_t length = Read<uint8_t>(0) % (maxLength + STRING_LENGTH_RANGE_OFFSET);
-        length = std::min(length, Remaining());
-
-        std::string value;
-        value.reserve(length);
-        for (size_t index = 0; index < length; ++index) {
-            value.push_back(static_cast<char>(data_[offset_++]));
-        }
-        return value;
-    }
-
-private:
-    size_t Remaining() const
-    {
-        return size_ - offset_;
-    }
-
-    const uint8_t* data_ = nullptr;
-    size_t size_ = 0;
-    size_t offset_ = 0;
-};
-
-std::string PickAction(FuzzReader& reader)
+std::string PickAction(FuzzedDataProvider& reader)
 {
     static const std::vector<std::string> actions = {
         EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN,
@@ -102,14 +57,14 @@ std::string PickAction(FuzzReader& reader)
         "usual.event.SHUTDOWN",
         "usual.event.UNKNOWN_BATTERY_STATS",
     };
-    uint8_t selector = reader.Read<uint8_t>(0);
+    uint8_t selector = reader.ConsumeIntegral<uint8_t>();
     if ((selector % (actions.size() + CUSTOM_ACTION_SELECTOR_SLOT)) == actions.size()) {
-        return reader.ReadString(MAX_STRING_LENGTH);
+        return reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
     }
     return actions[selector % actions.size()];
 }
 
-int32_t PickPluggedType(FuzzReader& reader)
+int32_t PickPluggedType(FuzzedDataProvider& reader)
 {
     static constexpr int32_t pluggedTypes[] = {
         static_cast<int32_t>(BatteryPluggedType::PLUGGED_TYPE_NONE),
@@ -119,10 +74,10 @@ int32_t PickPluggedType(FuzzReader& reader)
         StatsUtils::INVALID_VALUE,
         INT32_MAX_EDGE_VALUE,
     };
-    return pluggedTypes[reader.Read<uint8_t>(0) % (sizeof(pluggedTypes) / sizeof(pluggedTypes[0]))];
+    return pluggedTypes[reader.ConsumeIntegral<uint8_t>() % (sizeof(pluggedTypes) / sizeof(pluggedTypes[0]))];
 }
 
-int32_t PickCapacity(FuzzReader& reader)
+int32_t PickCapacity(FuzzedDataProvider& reader)
 {
     static constexpr int32_t capacities[] = {
         StatsUtils::INVALID_VALUE,
@@ -134,7 +89,7 @@ int32_t PickCapacity(FuzzReader& reader)
         BATTERY_LEVEL_OVER_FULL,
         INT32_MAX_EDGE_VALUE,
     };
-    return capacities[reader.Read<uint8_t>(0) % (sizeof(capacities) / sizeof(capacities[0]))];
+    return capacities[reader.ConsumeIntegral<uint8_t>() % (sizeof(capacities) / sizeof(capacities[0]))];
 }
 
 class SubscriberEventFuzzer {
@@ -160,21 +115,21 @@ public:
             return;
         }
 
-        FuzzReader reader(data, size);
-        size_t eventCount = MIN_ITEM_COUNT + (reader.Read<uint8_t>(0) % MAX_EVENTS_PER_INPUT);
+        FuzzedDataProvider reader(data, size);
+        size_t eventCount = MIN_ITEM_COUNT + (reader.ConsumeIntegral<uint8_t>() % MAX_EVENTS_PER_INPUT);
         for (size_t eventIndex = 0; eventIndex < eventCount; ++eventIndex) {
             std::string action = PickAction(reader);
             AAFwk::Want want;
             want.SetAction(action);
             want.SetParam(BatteryInfo::COMMON_EVENT_KEY_CAPACITY, PickCapacity(reader));
             want.SetParam(BatteryInfo::COMMON_EVENT_KEY_PLUGGED_TYPE, PickPluggedType(reader));
-            want.SetParam("userId", reader.Read<int32_t>(StatsUtils::INVALID_VALUE));
-            want.SetParam("uid", reader.Read<int32_t>(StatsUtils::INVALID_VALUE));
-            want.SetParam("packageName", reader.ReadString(MAX_STRING_LENGTH));
+            want.SetParam("userId", ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE));
+            want.SetParam("uid", ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE));
+            want.SetParam("packageName", reader.ConsumeRandomLengthString(MAX_STRING_LENGTH));
 
             EventFwk::CommonEventData eventData;
             eventData.SetWant(want);
-            eventData.SetCode(reader.Read<int32_t>(StatsUtils::INVALID_VALUE));
+            eventData.SetCode(ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE));
 
             EventFwk::MatchingSkills matchingSkills;
             matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN);
@@ -194,13 +149,15 @@ public:
 private:
     OHOS::sptr<BatteryStatsService> service_ = nullptr;
 };
-
-SubscriberEventFuzzer g_fuzzer;
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    g_fuzzer.FuzzSubscriberEvent(data, size);
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
+    static SubscriberEventFuzzer fuzzer;
+    fuzzer.FuzzSubscriberEvent(data, size);
     return 0;
 }
 

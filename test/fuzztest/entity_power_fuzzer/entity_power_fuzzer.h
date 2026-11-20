@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,4 +13,13 @@
  * limitations under the License.
  */
 
-FUZZ
+#ifndef ENTITY_POWER_FUZZER_H
+#define ENTITY_POWER_FUZZER_H
+
+#define FUZZ_PROJECT_NAME "entity_power_fuzzer"
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
+#endif // ENTITY_POWER_FUZZER_H

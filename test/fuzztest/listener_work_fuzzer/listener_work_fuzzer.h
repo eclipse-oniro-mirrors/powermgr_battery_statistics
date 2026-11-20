@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#ifndef LISTENER_PARSE_MATRIX_FUZZER_H
-#define LISTENER_PARSE_MATRIX_FUZZER_H
+#ifndef LISTENER_WORK_FUZZER_H
+#define LISTENER_WORK_FUZZER_H
 
-#define FUZZ_PROJECT_NAME "listener_parse_matrix_fuzzer"
+#define FUZZ_PROJECT_NAME "listener_work_fuzzer"
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
 
-#endif // LISTENER_PARSE_MATRIX_FUZZER_H
+#endif // LISTENER_WORK_FUZZER_H

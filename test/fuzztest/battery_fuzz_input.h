@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,4 +13,19 @@
  * limitations under the License.
  */
 
-FUZZ
+#ifndef BATTERY_FUZZ_INPUT_H
+#define BATTERY_FUZZ_INPUT_H
+
+#include <fuzzer/FuzzedDataProvider.h>
+
+namespace OHOS {
+namespace PowerMgr {
+template <typename T>
+T ConsumeOr(FuzzedDataProvider& provider, T fallback)
+{
+    return provider.remaining_bytes() >= sizeof(T) ? provider.ConsumeIntegral<T>() : fallback;
+}
+} // namespace PowerMgr
+} // namespace OHOS
+
+#endif // BATTERY_FUZZ_INPUT_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,11 +24,12 @@
 
 #include <cJSON.h>
 
+#include <fuzzer/FuzzedDataProvider.h>
+
 namespace OHOS {
 namespace PowerMgr {
 
 namespace {
-constexpr size_t BYTE_BITS = 8;
 constexpr size_t MIN_ITEM_COUNT = 1;
 constexpr size_t STRING_LENGTH_RANGE_OFFSET = 1;
 constexpr uint8_t BOOLEAN_MASK = 1;
@@ -53,50 +54,6 @@ constexpr uint16_t MAX_CPU_SPEED_ENTRY_COUNT = 8;
 constexpr uint16_t MAX_CPU_SPEED_NUM = 16;
 constexpr double POWER_VALUE_SCALE = 1000.0;
 
-class FuzzReader {
-public:
-    FuzzReader(const uint8_t* data, size_t size) : data_(data), size_(size) {}
-
-    template <typename T>
-    T Read(T fallback = T())
-    {
-        if (Remaining() < sizeof(T)) {
-            return fallback;
-        }
-        uint64_t value = 0;
-        for (size_t index = 0; index < sizeof(T); ++index) {
-            value |= static_cast<uint64_t>(data_[offset_ + index]) << (BYTE_BITS * index);
-        }
-        offset_ += sizeof(T);
-        return static_cast<T>(value);
-    }
-
-    std::string ReadString(size_t maxLength)
-    {
-        if (Remaining() == 0) {
-            return "";
-        }
-        size_t length = Read<uint8_t>(0) % (maxLength + STRING_LENGTH_RANGE_OFFSET);
-        length = std::min(length, Remaining());
-        std::string value;
-        value.reserve(length);
-        for (size_t index = 0; index < length; ++index) {
-            value.push_back(static_cast<char>(data_[offset_++]));
-        }
-        return value;
-    }
-
-private:
-    size_t Remaining() const
-    {
-        return size_ - offset_;
-    }
-
-    const uint8_t* data_ = nullptr;
-    size_t size_ = 0;
-    size_t offset_ = 0;
-};
-
 void AddArrayItem(cJSON* array, cJSON* value)
 {
     if (array == nullptr || value == nullptr) {
@@ -119,63 +76,56 @@ void AddJsonItem(cJSON* object, const char* key, cJSON* value)
     }
 }
 
-std::vector<char> MakeCStringBuffer(const std::string& value)
+cJSON* CreateJsonString(std::string value)
 {
-    std::vector<char> buffer(value.begin(), value.end());
-    buffer.push_back('\0');
-    return buffer;
+    std::replace(value.begin(), value.end(), char{}, ' ');
+    return cJSON_CreateString(value.c_str());
 }
 
-cJSON* CreateJsonString(const std::string& value)
+cJSON* CreateNestedValue(FuzzedDataProvider& reader)
 {
-    std::vector<char> buffer = MakeCStringBuffer(value);
-    return cJSON_CreateString(&buffer[0]);
-}
-
-cJSON* CreateNestedValue(FuzzReader& reader)
-{
-    uint8_t operation = reader.Read<uint8_t>(0) % NESTED_VALUE_KIND_COUNT;
+    uint8_t operation = reader.ConsumeIntegral<uint8_t>() % NESTED_VALUE_KIND_COUNT;
     switch (operation) {
         case NESTED_NUMBER_KIND:
-            return cJSON_CreateNumber(static_cast<double>(reader.Read<int64_t>(0)) / POWER_VALUE_SCALE);
+            return cJSON_CreateNumber(static_cast<double>(reader.ConsumeIntegral<int64_t>()) / POWER_VALUE_SCALE);
         case NESTED_STRING_KIND: {
-            std::string value = reader.ReadString(MAX_STRING_LENGTH);
+            std::string value = reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
             return CreateJsonString(value);
         }
         case NESTED_NULL_KIND:
             return cJSON_CreateNull();
         case NESTED_BOOL_KIND:
-            return cJSON_CreateBool((reader.Read<uint8_t>(0) & BOOLEAN_MASK) != 0);
+            return cJSON_CreateBool((reader.ConsumeIntegral<uint8_t>() & BOOLEAN_MASK) != 0);
         case NESTED_OBJECT_KIND: {
             cJSON* object = cJSON_CreateObject();
-            AddJsonItem(object, "value", cJSON_CreateNumber(reader.Read<int32_t>(0)));
+            AddJsonItem(object, "value", cJSON_CreateNumber(reader.ConsumeIntegral<int32_t>()));
             return object;
         }
         default: {
             cJSON* array = cJSON_CreateArray();
-            AddArrayItem(array, cJSON_CreateNumber(reader.Read<int32_t>(0)));
+            AddArrayItem(array, cJSON_CreateNumber(reader.ConsumeIntegral<int32_t>()));
             AddArrayItem(array, cJSON_CreateString("nested"));
             return array;
         }
     }
 }
 
-cJSON* CreateParserInput(FuzzReader& reader)
+cJSON* CreateParserInput(FuzzedDataProvider& reader)
 {
-    uint8_t operation = reader.Read<uint8_t>(0) % PARSER_INPUT_KIND_COUNT;
+    uint8_t operation = reader.ConsumeIntegral<uint8_t>() % PARSER_INPUT_KIND_COUNT;
     switch (operation) {
         case PARSER_ARRAY_KIND: {
             cJSON* array = cJSON_CreateArray();
-            size_t itemCount = reader.Read<uint8_t>(0) % (MAX_ARRAY_ITEMS + STRING_LENGTH_RANGE_OFFSET);
+            size_t itemCount = reader.ConsumeIntegral<uint8_t>() % (MAX_ARRAY_ITEMS + STRING_LENGTH_RANGE_OFFSET);
             for (size_t index = 0; index < itemCount; ++index) {
                 AddArrayItem(array, CreateNestedValue(reader));
             }
             return array;
         }
         case PARSER_NUMBER_KIND:
-            return cJSON_CreateNumber(static_cast<double>(reader.Read<int64_t>(0)) / POWER_VALUE_SCALE);
+            return cJSON_CreateNumber(static_cast<double>(reader.ConsumeIntegral<int64_t>()) / POWER_VALUE_SCALE);
         case PARSER_STRING_KIND: {
-            std::string value = reader.ReadString(MAX_STRING_LENGTH);
+            std::string value = reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
             return CreateJsonString(value);
         }
         case PARSER_OBJECT_KIND: {
@@ -188,7 +138,7 @@ cJSON* CreateParserInput(FuzzReader& reader)
     }
 }
 
-std::string PickPowerKey(FuzzReader& reader)
+std::string PickPowerKey(FuzzedDataProvider& reader)
 {
     static constexpr const char* keys[] = {
         StatsUtils::CURRENT_CPU_CLUSTER,
@@ -221,30 +171,30 @@ std::string PickPowerKey(FuzzReader& reader)
         "unknown_average_key",
         ""
     };
-    if ((reader.Read<uint8_t>(0) % CUSTOM_KEY_SELECTOR) == 0) {
-        return reader.ReadString(MAX_STRING_LENGTH);
+    if ((reader.ConsumeIntegral<uint8_t>() % CUSTOM_KEY_SELECTOR) == 0) {
+        return reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
     }
-    return keys[reader.Read<uint8_t>(0) % (sizeof(keys) / sizeof(keys[0]))];
+    return keys[reader.ConsumeIntegral<uint8_t>() % (sizeof(keys) / sizeof(keys[0]))];
 }
 
-void PrimeCpuShape(BatteryStatsParser& parser, FuzzReader& reader)
+void PrimeCpuShape(BatteryStatsParser& parser, FuzzedDataProvider& reader)
 {
-    parser.clusterNum_ = reader.Read<uint16_t>(0) % MAX_CPU_CLUSTER_NUM;
+    parser.clusterNum_ = reader.ConsumeIntegral<uint16_t>() % MAX_CPU_CLUSTER_NUM;
     parser.speedNum_.clear();
-    uint16_t speedEntries = reader.Read<uint16_t>(0) % MAX_CPU_SPEED_ENTRY_COUNT;
+    uint16_t speedEntries = reader.ConsumeIntegral<uint16_t>() % MAX_CPU_SPEED_ENTRY_COUNT;
     for (uint16_t index = 0; index < speedEntries; ++index) {
-        parser.speedNum_.push_back(reader.Read<uint16_t>(0) % MAX_CPU_SPEED_NUM);
+        parser.speedNum_.push_back(reader.ConsumeIntegral<uint16_t>() % MAX_CPU_SPEED_NUM);
     }
 }
 
-void ExerciseQueries(BatteryStatsParser& parser, FuzzReader& reader)
+void ExerciseQueries(BatteryStatsParser& parser, FuzzedDataProvider& reader)
 {
-    size_t queryCount = MIN_ITEM_COUNT + (reader.Read<uint8_t>(0) % MAX_QUERY_ROUNDS);
+    size_t queryCount = MIN_ITEM_COUNT + (reader.ConsumeIntegral<uint8_t>() % MAX_QUERY_ROUNDS);
     for (size_t index = 0; index < queryCount; ++index) {
         std::string key = PickPowerKey(reader);
         parser.GetAveragePowerMa(key);
-        parser.GetAveragePowerMa(key, reader.Read<uint16_t>(0));
-        parser.GetSpeedNum(reader.Read<uint16_t>(0));
+        parser.GetAveragePowerMa(key, reader.ConsumeIntegral<uint16_t>());
+        parser.GetSpeedNum(reader.ConsumeIntegral<uint16_t>());
     }
     parser.GetClusterNum();
     std::string dump;
@@ -257,10 +207,10 @@ void FuzzParserArrayMatrix(const uint8_t* data, size_t size)
         return;
     }
 
-    FuzzReader reader(data, size);
+    FuzzedDataProvider reader(data, size);
     BatteryStatsParser parser;
     PrimeCpuShape(parser, reader);
-    size_t parseRounds = MIN_ITEM_COUNT + (reader.Read<uint8_t>(0) % MAX_PARSE_ROUNDS);
+    size_t parseRounds = MIN_ITEM_COUNT + (reader.ConsumeIntegral<uint8_t>() % MAX_PARSE_ROUNDS);
     for (size_t round = 0; round < parseRounds; ++round) {
         std::string key = PickPowerKey(reader);
         cJSON* value = CreateParserInput(reader);

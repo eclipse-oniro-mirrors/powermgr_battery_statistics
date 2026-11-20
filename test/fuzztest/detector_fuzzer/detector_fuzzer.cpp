@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 
 #include "detector_fuzzer.h"
 
+#include "../battery_fuzz_input.h"
+
 #include "battery_stats_core.h"
 #include "battery_stats_detector.h"
 #include "battery_stats_service.h"
@@ -26,59 +28,12 @@ namespace OHOS {
 namespace PowerMgr {
 
 namespace {
-constexpr size_t BYTE_BITS = 8;
 constexpr size_t MIN_ITEM_COUNT = 1;
-constexpr size_t STRING_LENGTH_RANGE_OFFSET = 1;
 constexpr int32_t UNKNOWN_STATS_TYPE_VALUE = 30;
 constexpr int32_t NEGATIVE_UNKNOWN_STATS_TYPE_VALUE = -8;
 constexpr int32_t UNKNOWN_STATS_STATE_VALUE = 9;
 constexpr size_t MAX_EVENTS_PER_INPUT = 8;
 constexpr size_t MAX_STRING_LENGTH = 64;
-
-class FuzzReader {
-public:
-    FuzzReader(const uint8_t* data, size_t size) : data_(data), size_(size) {}
-
-    template <typename T>
-    T Read(T fallback = T())
-    {
-        if (Remaining() < sizeof(T)) {
-            return fallback;
-        }
-        uint64_t value = 0;
-        for (size_t index = 0; index < sizeof(T); ++index) {
-            value |= static_cast<uint64_t>(data_[offset_ + index]) << (BYTE_BITS * index);
-        }
-        offset_ += sizeof(T);
-        return static_cast<T>(value);
-    }
-
-    std::string ReadString(size_t maxLength)
-    {
-        if (Remaining() == 0) {
-            return "";
-        }
-        size_t length = Read<uint8_t>(0) % (maxLength + STRING_LENGTH_RANGE_OFFSET);
-        length = std::min(length, Remaining());
-
-        std::string value;
-        value.reserve(length);
-        for (size_t index = 0; index < length; ++index) {
-            value.push_back(static_cast<char>(data_[offset_++]));
-        }
-        return value;
-    }
-
-private:
-    size_t Remaining() const
-    {
-        return size_ - offset_;
-    }
-
-    const uint8_t* data_ = nullptr;
-    size_t size_ = 0;
-    size_t offset_ = 0;
-};
 
 StatsUtils::StatsType PickStatsType(uint8_t selector)
 {
@@ -127,22 +82,22 @@ StatsUtils::StatsState PickStatsState(uint8_t selector)
     return states[selector % (sizeof(states) / sizeof(states[0]))];
 }
 
-StatsUtils::StatsData BuildStatsData(FuzzReader& reader)
+StatsUtils::StatsData BuildStatsData(FuzzedDataProvider& reader)
 {
     StatsUtils::StatsData statsData;
-    uint8_t operation = reader.Read<uint8_t>(0);
+    uint8_t operation = reader.ConsumeIntegral<uint8_t>();
     statsData.type = PickStatsType(operation);
-    statsData.state = PickStatsState(reader.Read<uint8_t>(0));
-    statsData.uid = reader.Read<int32_t>(StatsUtils::INVALID_VALUE);
-    statsData.pid = reader.Read<int32_t>(StatsUtils::INVALID_VALUE);
-    statsData.level = reader.Read<int16_t>(StatsUtils::INVALID_VALUE);
-    statsData.time = reader.Read<int64_t>(StatsUtils::DEFAULT_VALUE);
-    statsData.traffic = reader.Read<int64_t>(StatsUtils::DEFAULT_VALUE);
-    statsData.eventDataType = reader.Read<int32_t>(StatsUtils::INVALID_VALUE);
-    statsData.eventDataExtra = reader.Read<int32_t>(StatsUtils::INVALID_VALUE);
-    statsData.eventDataName = reader.ReadString(MAX_STRING_LENGTH);
-    statsData.eventDebugInfo = reader.ReadString(MAX_STRING_LENGTH);
-    statsData.deviceId = reader.ReadString(MAX_STRING_LENGTH);
+    statsData.state = PickStatsState(reader.ConsumeIntegral<uint8_t>());
+    statsData.uid = ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE);
+    statsData.pid = ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE);
+    statsData.level = ConsumeOr<int16_t>(reader, StatsUtils::INVALID_VALUE);
+    statsData.time = ConsumeOr<int64_t>(reader, StatsUtils::DEFAULT_VALUE);
+    statsData.traffic = ConsumeOr<int64_t>(reader, StatsUtils::DEFAULT_VALUE);
+    statsData.eventDataType = ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE);
+    statsData.eventDataExtra = ConsumeOr<int32_t>(reader, StatsUtils::INVALID_VALUE);
+    statsData.eventDataName = reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
+    statsData.eventDebugInfo = reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
+    statsData.deviceId = reader.ConsumeRandomLengthString(MAX_STRING_LENGTH);
     return statsData;
 }
 
@@ -174,8 +129,8 @@ public:
             return;
         }
 
-        FuzzReader reader(data, size);
-        size_t eventCount = MIN_ITEM_COUNT + (reader.Read<uint8_t>(0) % MAX_EVENTS_PER_INPUT);
+        FuzzedDataProvider reader(data, size);
+        size_t eventCount = MIN_ITEM_COUNT + (reader.ConsumeIntegral<uint8_t>() % MAX_EVENTS_PER_INPUT);
         for (size_t eventIndex = 0; eventIndex < eventCount; ++eventIndex) {
             detector->HandleStatsChangedEvent(BuildStatsData(reader));
         }
@@ -189,13 +144,15 @@ public:
 private:
     OHOS::sptr<BatteryStatsService> service_ = nullptr;
 };
-
-DetectorFuzzer g_fuzzer;
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    g_fuzzer.FuzzDetector(data, size);
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
+    static DetectorFuzzer fuzzer;
+    fuzzer.FuzzDetector(data, size);
     return 0;
 }
 

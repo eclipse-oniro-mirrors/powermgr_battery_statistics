@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,13 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef ENTITY_POWER_MATRIX_FUZZER_H
-#define ENTITY_POWER_MATRIX_FUZZER_H
-
-#define FUZZ_PROJECT_NAME "entity_power_matrix_fuzzer"
+#ifndef BATTERY_LISTENER_FUZZ_SUPPORT_H
+#define BATTERY_LISTENER_FUZZ_SUPPORT_H
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <fuzzer/FuzzedDataProvider.h>
+#include "battery_stats_listener.h"
 
-#endif // ENTITY_POWER_MATRIX_FUZZER_H
+namespace OHOS {
+namespace PowerMgr {
+using ListenerFuzzCase = void (*)(BatteryStatsListener&, const std::string&, const cJSON*, FuzzedDataProvider&);
+void RunListenerFuzzCase(const uint8_t* data, size_t size, ListenerFuzzCase exercise);
+} // namespace PowerMgr
+} // namespace OHOS
+
+#endif // BATTERY_LISTENER_FUZZ_SUPPORT_H
