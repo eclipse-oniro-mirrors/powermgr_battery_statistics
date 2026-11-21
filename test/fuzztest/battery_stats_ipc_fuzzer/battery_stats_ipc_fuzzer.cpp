@@ -28,6 +28,8 @@
 #include "string_ex.h"
 
 using namespace OHOS::PowerMgr;
+using OHOS::MessageOption;
+using OHOS::MessageParcel;
 
 namespace {
 // services/IBatteryStats.idl declares ten methods, their ipc codes are assigned from 0 in declaration order
