@@ -17,7 +17,7 @@ import("../../../batterystats.gni")
 module_output_path = "battery_statistics/battery_statistics"
 
 ##############################fuzztest##########################################
-ohos_fuzztest("StatsConverttypeFuzzTest") {
+ohos_fuzztest("StatsConvertTypeFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file =
       "${batterystats_root_path}/test/fuzztest/stats_converttype_fuzzer"
@@ -49,5 +49,5 @@ ohos_fuzztest("StatsConverttypeFuzzTest") {
 ###############################################################################
 group("fuzztest") {
   testonly = true
-  deps = [ ":StatsConverttypeFuzzTest" ]
+  deps = [ ":StatsConvertTypeFuzzTest" ]
 }

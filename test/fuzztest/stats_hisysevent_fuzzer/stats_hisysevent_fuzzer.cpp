@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <string>
 
+#include <fuzzer/FuzzedDataProvider.h>
+
 #include "stats_hisysevent.h"
 
 using namespace OHOS::PowerMgr;
@@ -30,6 +32,15 @@ void CheckOneEvent(const std::string& eventName)
 {
     (void)StatsHiSysEvent::CheckHiSysEvent(eventName);
 }
+
+// Cover the empty name and every registered HiSysEvent name
+void CheckAllRegisteredEvents()
+{
+    CheckOneEvent(std::string());
+    for (int32_t i = 0; i < StatsHiSysEvent::HISYSEVENT_TYPE_END; i++) {
+        CheckOneEvent(StatsHiSysEvent::HISYSEVENT_LIST[i]);
+    }
+}
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -38,18 +49,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return 0;
     }
 
-    // Limit input length to avoid excessive memory usage
-    size_t len = (size > MAX_EVENT_NAME_LEN) ? MAX_EVENT_NAME_LEN : size;
-    std::string eventName(reinterpret_cast<const char*>(data), len);
-
-    // Cover the fuzz driven event name
-    CheckOneEvent(eventName);
-
-    // Cover the empty name and every registered HiSysEvent name
-    CheckOneEvent(std::string());
-    for (int32_t i = 0; i < StatsHiSysEvent::HISYSEVENT_TYPE_END; i++) {
-        CheckOneEvent(StatsHiSysEvent::HISYSEVENT_LIST[i]);
-    }
-
+    FuzzedDataProvider fdp(data, size);
+    CheckOneEvent(fdp.ConsumeRandomLengthString(MAX_EVENT_NAME_LEN));
+    CheckAllRegisteredEvents();
     return 0;
 }

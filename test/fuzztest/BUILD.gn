@@ -34,12 +34,17 @@ group("fuzztest") {
     "statshelper_fuzzer:StatsHelperFuzzTest",
     "statscjsonutils_fuzzer:StatsCjsonUtilsFuzzTest",
     "battery_stats_service_fuzzer:BatteryStatsServiceFuzzTest",
+    "battery_stats_ipc_fuzzer:BatteryStatsIpcFuzzTest",
+    "battery_stats_core_fuzzer:BatteryStatsCoreFuzzTest",
+    "battery_stats_core_update_fuzzer:BatteryStatsCoreUpdateFuzzTest",
     "battery_stats_parser_fuzzer:BatteryStatsParserFuzzTest",
     "battery_stats_detector_fuzzer:BatteryStatsDetectorFuzzTest",
     "battery_stats_dumper_fuzzer:BatteryStatsDumperFuzzTest",
-    "battery_stats_entity_fuzzer:BatteryStatsEntityFuzzTest",
+    "battery_stats_entity_connect_fuzzer:BatteryStatsEntityConnectFuzzTest",
+    "battery_stats_entity_cpu_fuzzer:BatteryStatsEntityCpuFuzzTest",
+    "battery_stats_entity_app_fuzzer:BatteryStatsEntityAppFuzzTest",
     "battery_stats_info_convert_fuzzer:BatteryStatsInfoConvertFuzzTest",
-    "stats_converttype_fuzzer:StatsConverttypeFuzzTest",
+    "stats_converttype_fuzzer:StatsConvertTypeFuzzTest",
     "stats_hisysevent_fuzzer:StatsHiSysEventFuzzTest"
   ]
 }

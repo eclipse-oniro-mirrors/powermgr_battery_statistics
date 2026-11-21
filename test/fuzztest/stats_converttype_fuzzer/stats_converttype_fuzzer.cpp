@@ -17,7 +17,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 #include "stats_utils.h"
 
@@ -26,17 +27,32 @@ using namespace OHOS::PowerMgr;
 namespace {
 constexpr int32_t STATS_TYPE_MIN = static_cast<int32_t>(StatsUtils::STATS_TYPE_INVALID);
 constexpr int32_t STATS_TYPE_MAX = static_cast<int32_t>(StatsUtils::STATS_TYPE_ALARM);
-constexpr uint32_t STATS_TYPE_RANGE = static_cast<uint32_t>(STATS_TYPE_MAX - STATS_TYPE_MIN + 1);
-
-StatsUtils::StatsType ToStatsType(uint8_t raw)
-{
-    uint32_t offset = static_cast<uint32_t>(raw) % STATS_TYPE_RANGE;
-    return static_cast<StatsUtils::StatsType>(STATS_TYPE_MIN + static_cast<int32_t>(offset));
-}
+constexpr int32_t OUT_OF_RANGE_SPAN = 8;
+constexpr size_t MAX_FUZZ_ROUNDS = 8;
 
 void ConvertOneType(StatsUtils::StatsType type)
 {
     (void)StatsUtils::ConvertStatsType(type);
+}
+
+void FuzzConvertType(FuzzedDataProvider& fdp)
+{
+    size_t rounds = fdp.ConsumeIntegralInRange<size_t>(0, MAX_FUZZ_ROUNDS);
+    for (size_t i = 0; i < rounds; i++) {
+        ConvertOneType(static_cast<StatsUtils::StatsType>(
+            fdp.ConsumeIntegralInRange<int32_t>(STATS_TYPE_MIN, STATS_TYPE_MAX)));
+    }
+}
+
+// Exhaustively cover every enumerator, then the values the conversion must reject
+void CoverAllStatsTypes()
+{
+    for (int32_t i = STATS_TYPE_MIN; i <= STATS_TYPE_MAX; i++) {
+        ConvertOneType(static_cast<StatsUtils::StatsType>(i));
+    }
+    for (int32_t i = STATS_TYPE_MAX + 1; i <= STATS_TYPE_MAX + OUT_OF_RANGE_SPAN; i++) {
+        ConvertOneType(static_cast<StatsUtils::StatsType>(i));
+    }
 }
 } // namespace
 
@@ -46,15 +62,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return 0;
     }
 
-    // Cover the enum values driven by the fuzz input
-    for (size_t i = 0; i < size && i < STATS_TYPE_RANGE; i++) {
-        ConvertOneType(ToStatsType(data[i]));
-    }
-
-    // Exhaustively cover every valid enum value, including STATS_TYPE_ALARM
-    for (int32_t i = STATS_TYPE_MIN; i <= STATS_TYPE_MAX; i++) {
-        ConvertOneType(static_cast<StatsUtils::StatsType>(i));
-    }
-
+    FuzzedDataProvider fdp(data, size);
+    FuzzConvertType(fdp);
+    CoverAllStatsTypes();
     return 0;
 }

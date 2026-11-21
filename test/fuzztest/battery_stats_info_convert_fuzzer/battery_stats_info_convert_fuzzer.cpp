@@ -17,7 +17,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 #include "battery_stats_info.h"
 
@@ -27,18 +28,31 @@ namespace {
 // ConsumptionType enumerators range from CONSUMPTION_TYPE_INVALID (-17) to CONSUMPTION_TYPE_ALARM (-1)
 constexpr int32_t CONSUMPTION_TYPE_MIN = static_cast<int32_t>(BatteryStatsInfo::CONSUMPTION_TYPE_INVALID);
 constexpr int32_t CONSUMPTION_TYPE_MAX = static_cast<int32_t>(BatteryStatsInfo::CONSUMPTION_TYPE_ALARM);
-constexpr uint32_t CONSUMPTION_TYPE_RANGE =
-    static_cast<uint32_t>(CONSUMPTION_TYPE_MAX - CONSUMPTION_TYPE_MIN + 1);
-
-BatteryStatsInfo::ConsumptionType ToConsumptionType(uint8_t raw)
-{
-    uint32_t offset = static_cast<uint32_t>(raw) % CONSUMPTION_TYPE_RANGE;
-    return static_cast<BatteryStatsInfo::ConsumptionType>(CONSUMPTION_TYPE_MIN + static_cast<int32_t>(offset));
-}
+constexpr size_t MAX_FUZZ_ROUNDS = 8;
 
 void ConvertOneType(BatteryStatsInfo::ConsumptionType type)
 {
     (void)BatteryStatsInfo::ConvertConsumptionType(type);
+}
+
+void FuzzConvertType(FuzzedDataProvider& fdp)
+{
+    size_t rounds = fdp.ConsumeIntegralInRange<size_t>(0, MAX_FUZZ_ROUNDS);
+    for (size_t i = 0; i < rounds; i++) {
+        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(
+            fdp.ConsumeIntegralInRange<int32_t>(CONSUMPTION_TYPE_MIN, CONSUMPTION_TYPE_MAX)));
+    }
+}
+
+// Exhaustively cover every enumerator, then the out of range values the switch statement must reject
+void CoverAllConsumptionTypes()
+{
+    for (int32_t i = CONSUMPTION_TYPE_MIN; i <= CONSUMPTION_TYPE_MAX; i++) {
+        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(i));
+    }
+    for (int32_t i = 0; i <= -CONSUMPTION_TYPE_MIN; i++) {
+        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(i));
+    }
 }
 } // namespace
 
@@ -48,20 +62,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return 0;
     }
 
-    // Cover the enum values driven by the fuzz input
-    for (size_t i = 0; i < size && i < CONSUMPTION_TYPE_RANGE; i++) {
-        ConvertOneType(ToConsumptionType(data[i]));
-    }
-
-    // Exhaustively cover every valid enum value
-    for (int32_t i = CONSUMPTION_TYPE_MIN; i <= CONSUMPTION_TYPE_MAX; i++) {
-        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(i));
-    }
-
-    // Cover the out of range values that the switch statement must reject
-    for (int32_t i = 0; i <= static_cast<int32_t>(CONSUMPTION_TYPE_RANGE); i++) {
-        ConvertOneType(static_cast<BatteryStatsInfo::ConsumptionType>(i));
-    }
-
+    FuzzedDataProvider fdp(data, size);
+    FuzzConvertType(fdp);
+    CoverAllConsumptionTypes();
     return 0;
 }

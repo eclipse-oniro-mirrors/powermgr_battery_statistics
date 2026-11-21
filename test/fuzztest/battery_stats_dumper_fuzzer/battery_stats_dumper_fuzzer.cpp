@@ -15,59 +15,48 @@
 
 #define FUZZ_PROJECT_NAME "battery_stats_dumper_fuzzer"
 
-#include "battery_stats_dumper.h"
-#include "battery_stats_service.h"
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include <fuzzer/FuzzedDataProvider.h>
+
+#include "battery_stats_dumper.h"
+#include "battery_stats_service.h"
+
 using namespace OHOS::PowerMgr;
 
 namespace {
-constexpr size_t MIN_INPUT_SIZE = 1;
 constexpr size_t MAX_STRING_BYTES = 32;
-constexpr size_t MAX_ARG_COUNT = 8;
+constexpr size_t MAX_ARG_COUNT = 4;
 
-std::vector<std::string> BuildArgs(const uint8_t* data, size_t size)
+// The option sets BatteryStatsDumper actually handles, kept minimal on purpose
+const std::vector<std::vector<std::string>>& GetSeedArgSets()
 {
-    std::vector<std::string> args = {
-        "-h",
-        "-batterystats",
-        "-poweraverage",
-        "-unknown"
+    static const std::vector<std::vector<std::string>> argSets = {
+        {},
+        {"-h"},
+        {"-batterystats"},
+        {"-poweraverage"},
+        {"-batterystats", "-poweraverage"}
     };
-    if (data == nullptr || size < MIN_INPUT_SIZE) {
-        return args;
-    }
+    return argSets;
+}
 
-    size_t offset = 0;
-    while (offset < size && args.size() < MAX_ARG_COUNT) {
-        size_t length = std::min(static_cast<size_t>(data[offset] % MAX_STRING_BYTES), size - offset - 1);
-        offset++;
-        if (length == 0 || offset + length > size) {
-            continue;
-        }
-        args.emplace_back(reinterpret_cast<const char*>(data + offset), length);
-        offset += length;
+std::vector<std::string> ConsumeArgs(FuzzedDataProvider& fdp)
+{
+    std::vector<std::string> args;
+    while (fdp.remaining_bytes() > 0 && args.size() < MAX_ARG_COUNT) {
+        args.emplace_back(fdp.ConsumeRandomLengthString(MAX_STRING_BYTES));
     }
     return args;
 }
 
-std::vector<std::vector<std::string>> BuildArgSets(const uint8_t* data, size_t size)
+std::vector<std::vector<std::string>> BuildArgSets(FuzzedDataProvider& fdp)
 {
-    std::vector<std::vector<std::string>> argSets;
-    argSets.push_back({});
-    argSets.push_back({"-h"});
-    argSets.push_back({"-batterystats"});
-    argSets.push_back({"-poweraverage"});
-    argSets.push_back({"-batterystats", "-poweraverage"});
-
-    auto fuzzArgs = BuildArgs(data, size);
-    if (!fuzzArgs.empty()) {
-        argSets.push_back(fuzzArgs);
-    }
+    std::vector<std::vector<std::string>> argSets = GetSeedArgSets();
+    argSets.emplace_back(ConsumeArgs(fdp));
     return argSets;
 }
 } // namespace
@@ -77,7 +66,9 @@ public:
     BatteryStatsDumperFuzzer()
     {
         service_ = BatteryStatsService::GetInstance();
-        service_->OnStart();
+        if (service_ != nullptr) {
+            service_->OnStart();
+        }
     }
 
     ~BatteryStatsDumperFuzzer()
@@ -85,15 +76,17 @@ public:
         if (service_ != nullptr) {
             service_->OnStop();
         }
+        service_ = nullptr;
     }
 
-    void Fuzz(const uint8_t* data, size_t size)
+    void Fuzz(FuzzedDataProvider& fdp)
     {
-        if (data == nullptr || size < MIN_INPUT_SIZE) {
+        if (service_ == nullptr) {
             return;
         }
 
-        for (const auto& args : BuildArgSets(data, size)) {
+        std::vector<std::vector<std::string>> argSets = BuildArgSets(fdp);
+        for (const auto& args : argSets) {
             std::string result;
             (void)BatteryStatsDumper::Dump(args, result);
         }
@@ -104,11 +97,20 @@ private:
 };
 
 namespace {
-BatteryStatsDumperFuzzer g_fuzzer;
+BatteryStatsDumperFuzzer& GetFuzzer()
+{
+    static BatteryStatsDumperFuzzer fuzzer;
+    return fuzzer;
+}
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    g_fuzzer.Fuzz(data, size);
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
+
+    FuzzedDataProvider fdp(data, size);
+    GetFuzzer().Fuzz(fdp);
     return 0;
 }

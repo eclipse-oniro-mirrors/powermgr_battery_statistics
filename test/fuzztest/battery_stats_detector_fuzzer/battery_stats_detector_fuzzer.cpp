@@ -15,78 +15,43 @@
 
 #define FUZZ_PROJECT_NAME "battery_stats_detector_fuzzer"
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <fuzzer/FuzzedDataProvider.h>
+
+#include "battery_stats_core.h"
 #include "battery_stats_detector.h"
 #include "battery_stats_service.h"
 #include "stats_utils.h"
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <string>
-#include <vector>
 
 using namespace OHOS::PowerMgr;
 
 namespace {
-constexpr size_t MIN_INPUT_SIZE = sizeof(uint32_t);
+constexpr int32_t STATS_TYPE_MIN = static_cast<int32_t>(StatsUtils::STATS_TYPE_INVALID);
+constexpr int32_t STATS_TYPE_MAX = static_cast<int32_t>(StatsUtils::STATS_TYPE_ALARM);
+constexpr int32_t STATS_STATE_MIN = static_cast<int32_t>(StatsUtils::STATS_STATE_INVALID);
+constexpr int32_t STATS_STATE_MAX = static_cast<int32_t>(StatsUtils::STATS_STATE_WORKSCHEDULER_EXECUTED);
 constexpr size_t MAX_STRING_BYTES = 32;
-constexpr size_t STATS_TYPE_COUNT = 30;
-constexpr size_t STATS_STATE_COUNT = 5;
 
-template<typename T>
-T ReadValue(const uint8_t* data, size_t size, size_t& offset)
-{
-    T value {};
-    if (data == nullptr || offset + sizeof(T) > size) {
-        return value;
-    }
-    value = *reinterpret_cast<const T*>(data + offset);
-    offset += sizeof(T);
-    return value;
-}
-
-std::string ReadString(const uint8_t* data, size_t size, size_t& offset)
-{
-    if (data == nullptr || offset >= size) {
-        return {};
-    }
-
-    size_t length = std::min(static_cast<size_t>(data[offset] % MAX_STRING_BYTES), size - offset - 1);
-    offset++;
-    if (length == 0 || offset + length > size) {
-        return {};
-    }
-
-    std::string value(reinterpret_cast<const char*>(data + offset), length);
-    offset += length;
-    return value;
-}
-
-StatsUtils::StatsType ToStatsType(uint8_t raw)
-{
-    return static_cast<StatsUtils::StatsType>(static_cast<int32_t>(raw % STATS_TYPE_COUNT) - 1);
-}
-
-StatsUtils::StatsState ToStatsState(uint8_t raw)
-{
-    return static_cast<StatsUtils::StatsState>(static_cast<int32_t>(raw % STATS_STATE_COUNT) - 1);
-}
-
-StatsUtils::StatsData BuildStatsData(const uint8_t* data, size_t size, size_t& offset, StatsUtils::StatsType type)
+StatsUtils::StatsData ConsumeStatsData(FuzzedDataProvider& fdp)
 {
     StatsUtils::StatsData statsData;
-    statsData.type = type;
-    statsData.state = ToStatsState(ReadValue<uint8_t>(data, size, offset));
-    statsData.uid = ReadValue<int32_t>(data, size, offset);
-    statsData.pid = ReadValue<int32_t>(data, size, offset);
-    statsData.eventDataName = ReadString(data, size, offset);
-    statsData.eventDebugInfo = ReadString(data, size, offset);
-    statsData.eventDataType = ReadValue<int32_t>(data, size, offset);
-    statsData.eventDataExtra = ReadValue<int32_t>(data, size, offset);
-    statsData.level = ReadValue<int16_t>(data, size, offset);
-    statsData.time = ReadValue<int64_t>(data, size, offset);
-    statsData.traffic = ReadValue<int64_t>(data, size, offset);
-    statsData.deviceId = ReadString(data, size, offset);
+    statsData.state = static_cast<StatsUtils::StatsState>(
+        fdp.ConsumeIntegralInRange<int32_t>(STATS_STATE_MIN, STATS_STATE_MAX));
+    statsData.uid = fdp.ConsumeIntegral<int32_t>();
+    statsData.pid = fdp.ConsumeIntegral<int32_t>();
+    statsData.eventDataName = fdp.ConsumeRandomLengthString(MAX_STRING_BYTES);
+    statsData.eventDebugInfo = fdp.ConsumeRandomLengthString(MAX_STRING_BYTES);
+    statsData.eventDataType = fdp.ConsumeIntegral<int32_t>();
+    statsData.eventDataExtra = fdp.ConsumeIntegral<int32_t>();
+    statsData.level = fdp.ConsumeIntegral<int16_t>();
+    statsData.time = fdp.ConsumeIntegral<int64_t>();
+    statsData.traffic = fdp.ConsumeIntegral<int64_t>();
+    statsData.deviceId = fdp.ConsumeRandomLengthString(MAX_STRING_BYTES);
     return statsData;
 }
 
@@ -126,8 +91,14 @@ class BatteryStatsDetectorFuzzer {
 public:
     BatteryStatsDetectorFuzzer()
     {
-        service_ = BatteryStatsService::GetInstance();
-        service_->OnStart();
+        OHOS::sptr<BatteryStatsService> service = BatteryStatsService::GetInstance();
+        if (service == nullptr) {
+            return;
+        }
+        service->OnStart();
+        detector_ = service->GetBatteryStatsDetector();
+        core_ = service->GetBatteryStatsCore();
+        service_ = service;
     }
 
     ~BatteryStatsDetectorFuzzer()
@@ -135,44 +106,55 @@ public:
         if (service_ != nullptr) {
             service_->OnStop();
         }
+        core_ = nullptr;
+        detector_ = nullptr;
+        service_ = nullptr;
     }
 
-    void Fuzz(const uint8_t* data, size_t size)
+    void Fuzz(FuzzedDataProvider& fdp)
     {
-        if (data == nullptr || size < MIN_INPUT_SIZE) {
+        if (detector_ == nullptr) {
             return;
         }
 
-        auto detector = service_->GetBatteryStatsDetector();
-        auto core = service_->GetBatteryStatsCore();
-        if (detector == nullptr || core == nullptr) {
-            return;
-        }
-
-        size_t offset = 0;
+        // The event payload is consumed once and replayed for every stats type, so that one input still
+        // walks all detector branches instead of being spent on the first few types
+        StatsUtils::StatsData statsData = ConsumeStatsData(fdp);
         for (auto type : GetDetectorTypes()) {
-            StatsUtils::StatsData statsData = BuildStatsData(data, size, offset, type);
-            detector->HandleStatsChangedEvent(statsData);
-            if (offset >= size) {
-                offset = 0;
-            }
+            statsData.type = type;
+            detector_->HandleStatsChangedEvent(statsData);
         }
 
-        StatsUtils::StatsData fallbackData = BuildStatsData(data, size, offset, ToStatsType(data[0]));
-        detector->HandleStatsChangedEvent(fallbackData);
-        core->Reset();
+        statsData.type = static_cast<StatsUtils::StatsType>(
+            fdp.ConsumeIntegralInRange<int32_t>(STATS_TYPE_MIN, STATS_TYPE_MAX));
+        detector_->HandleStatsChangedEvent(statsData);
+
+        if (core_ != nullptr) {
+            core_->Reset();
+        }
     }
 
 private:
+    std::shared_ptr<BatteryStatsDetector> detector_ = nullptr;
+    std::shared_ptr<BatteryStatsCore> core_ = nullptr;
     OHOS::sptr<BatteryStatsService> service_ = nullptr;
 };
 
 namespace {
-BatteryStatsDetectorFuzzer g_fuzzer;
+BatteryStatsDetectorFuzzer& GetFuzzer()
+{
+    static BatteryStatsDetectorFuzzer fuzzer;
+    return fuzzer;
+}
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    g_fuzzer.Fuzz(data, size);
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
+
+    FuzzedDataProvider fdp(data, size);
+    GetFuzzer().Fuzz(fdp);
     return 0;
 }
