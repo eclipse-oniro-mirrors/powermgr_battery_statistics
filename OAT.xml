@@ -20,6 +20,10 @@
             <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies">
 			    <filteritem type="filename" name="*.png" desc="The framework image"/>
             </filefilter>
+            <filefilter name="defaultPolicyFilter" desc="Filters for license policies">
+                <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+            </filefilter>
         </filefilterlist>
     </oatconfig>
 </configuration>

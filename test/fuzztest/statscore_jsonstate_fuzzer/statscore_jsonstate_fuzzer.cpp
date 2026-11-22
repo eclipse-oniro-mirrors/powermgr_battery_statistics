@@ -75,16 +75,20 @@ void AddArrayItem(cJSON* array, cJSON* value)
     }
 }
 
-cJSON* CreateJsonString(std::string value)
+cJSON* CreateJsonString(const std::string& value)
 {
-    std::replace(value.begin(), value.end(), char{}, ' ');
-    return cJSON_CreateString(value.c_str());
+    std::vector<char> buffer(value.begin(), value.end());
+    std::replace(buffer.begin(), buffer.end(), char{}, ' ');
+    buffer.push_back(char{});
+    return cJSON_CreateString(buffer.data());
 }
 
-void AddJsonItem(cJSON* root, std::string key, cJSON* value)
+void AddJsonItem(cJSON* root, const std::string& key, cJSON* value)
 {
-    std::replace(key.begin(), key.end(), char{}, ' ');
-    AddJsonItem(root, key.c_str(), value);
+    std::vector<char> buffer(key.begin(), key.end());
+    std::replace(buffer.begin(), buffer.end(), char{}, ' ');
+    buffer.push_back(char{});
+    AddJsonItem(root, buffer.data(), value);
 }
 
 cJSON* BuildMaybeWrongContainer(FuzzedDataProvider& reader)

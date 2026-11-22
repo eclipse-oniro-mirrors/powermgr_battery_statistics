@@ -15,6 +15,7 @@
 
 #include "battery_listener_fuzz_support.h"
 #include <algorithm>
+#include <vector>
 #include "battery_stats_core.h"
 #include "battery_stats_service.h"
 #include "stats_hisysevent.h"
@@ -48,10 +49,12 @@ void AddJsonItem(cJSON* root, const char* key, cJSON* value)
     }
 }
 
-cJSON* CreateJsonString(std::string value)
+cJSON* CreateJsonString(const std::string& value)
 {
-    std::replace(value.begin(), value.end(), char{}, ' ');
-    return cJSON_CreateString(value.c_str());
+    std::vector<char> buffer(value.begin(), value.end());
+    std::replace(buffer.begin(), buffer.end(), char{}, ' ');
+    buffer.push_back(char{});
+    return cJSON_CreateString(buffer.data());
 }
 
 void AddArrayItem(cJSON* array, cJSON* value)

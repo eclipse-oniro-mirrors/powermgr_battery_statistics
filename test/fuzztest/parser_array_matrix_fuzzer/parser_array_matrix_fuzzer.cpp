@@ -76,10 +76,12 @@ void AddJsonItem(cJSON* object, const char* key, cJSON* value)
     }
 }
 
-cJSON* CreateJsonString(std::string value)
+cJSON* CreateJsonString(const std::string& value)
 {
-    std::replace(value.begin(), value.end(), char{}, ' ');
-    return cJSON_CreateString(value.c_str());
+    std::vector<char> buffer(value.begin(), value.end());
+    std::replace(buffer.begin(), buffer.end(), char{}, ' ');
+    buffer.push_back(char{});
+    return cJSON_CreateString(buffer.data());
 }
 
 cJSON* CreateNestedValue(FuzzedDataProvider& reader)
