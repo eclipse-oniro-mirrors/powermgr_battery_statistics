@@ -21,12 +21,60 @@
 			    <filteritem type="filename" name="*.png" desc="The framework image"/>
             </filefilter>
             <filefilter name="defaultPolicyFilter" desc="Filters for license policies">
-                <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/batterystatsserviceipc_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/batterystatsserviceipc_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/cputimereader_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/cputimereader_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/detector_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/detector_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_power_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_power_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_query_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_query_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_timer_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_timer_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_connectivity_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_connectivity_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_debug_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_debug_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_device_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_device_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_work_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_work_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/parser_array_matrix_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/parser_array_matrix_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
                 <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/subscriber_event_fuzzer/corpus/alternate" desc="Raw fuzz data covered by the repository LICENSE"/>
+                <filteritem type="filepath" name="test/fuzztest/subscriber_event_fuzzer/corpus/init" desc="Raw fuzz data covered by the repository LICENSE"/>
             </filefilter>
             <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies">
-                <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/batterystatsserviceipc_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/batterystatsserviceipc_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/cputimereader_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/cputimereader_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/detector_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/detector_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_power_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_power_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_query_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_query_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_timer_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/entity_timer_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_connectivity_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_connectivity_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_debug_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_debug_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_device_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_device_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_work_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/listener_work_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/parser_array_matrix_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/parser_array_matrix_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
                 <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/statscore_jsonstate_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/subscriber_event_fuzzer/corpus/alternate" desc="Raw fuzz corpus is input data"/>
+                <filteritem type="filepath" name="test/fuzztest/subscriber_event_fuzzer/corpus/init" desc="Raw fuzz corpus is input data"/>
             </filefilter>
         </filefilterlist>
     </oatconfig>
