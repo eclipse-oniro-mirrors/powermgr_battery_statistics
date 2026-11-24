@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,9 +13,16 @@
  * limitations under the License.
  */
 
-#ifndef LXJ_BATTERY_FUZZER_H
-#define LXJ_BATTERY_FUZZER_H
+#ifndef BATTERY_STATS_IPC_FUZZER_H
+#define BATTERY_STATS_IPC_FUZZER_H
 
-#define FUZZ_PROJECT_NAME "LXJBattery_fuzzer"
+#include <cstdint>
+#include <unistd.h>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <fcntl.h>
 
-#endif // LXJ_BATTERY_FUZZER_H
+#define FUZZ_PROJECT_NAME "BatteryStatsIpc_fuzzer"
+
+#endif // BATTERY_STATS_IPC_FUZZER_H
