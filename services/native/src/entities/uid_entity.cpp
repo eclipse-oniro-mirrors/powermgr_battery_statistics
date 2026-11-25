@@ -129,7 +129,10 @@ void UidEntity::Calculate(int32_t uid)
         power += CalculateForConnectivity(iter.first);
         power += CalculateForCommon(iter.first);
         iter.second = power;
-        totalPowerMah_ += power;
+        {
+            std::lock_guard<std::mutex> statsLock(statsMutex_);
+            totalPowerMah_ += power;
+        }
         AddtoStatsList(iter.first, power);
         int32_t uid = iter.first;
         int32_t userId = AccountSA::OhosAccountKits::GetInstance().GetDeviceAccountIdByUID(uid);
@@ -145,7 +148,7 @@ void UidEntity::AddtoStatsList(int32_t uid, double power)
     statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_APP);
     statsInfo->SetUid(uid);
     statsInfo->SetPower(power);
-    statsInfoList_.push_back(statsInfo);
+    UpdateStatsInfoList(statsInfo);
 }
 
 double UidEntity::GetEntityPowerMah(int32_t uidOrUserId)

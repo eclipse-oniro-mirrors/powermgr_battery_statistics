@@ -94,11 +94,14 @@ void ScreenEntity::Calculate(int32_t uid)
     }
 
     screenPowerMah_ = (screenOnPowerMah + brightnessPowerMah) / StatsUtils::MS_IN_HOUR;
-    totalPowerMah_ += screenPowerMah_;
+    {
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
+        totalPowerMah_ += screenPowerMah_;
+    }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();
     statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_SCREEN);
     statsInfo->SetPower(screenPowerMah_);
-    statsInfoList_.push_back(statsInfo);
+    UpdateStatsInfoList(statsInfo);
     STATS_HILOGD(COMP_SVC, "Calculate screen active power consumption: %{public}lfmAh", screenPowerMah_);
 }
 

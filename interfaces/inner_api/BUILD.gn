@@ -24,6 +24,8 @@ ohos_shared_library("batterystats_client") {
     debug = false
   }
 
+  version_script = "libbatterystats_client.map"
+
   sources = [
     "${batterystats_frameworks_path}/native/src/battery_stats_client.cpp",
     "${batterystats_frameworks_path}/native/src/battery_stats_info.cpp",
