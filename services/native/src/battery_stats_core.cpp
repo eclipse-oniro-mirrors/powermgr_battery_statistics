@@ -734,8 +734,15 @@ double BatteryStatsCore::GetAppStatsMah(const int32_t& uid)
 double BatteryStatsCore::GetAppStatsPercent(const int32_t& uid)
 {
     double appStatsPercent = StatsUtils::DEFAULT_VALUE;
-    auto statsInfoList = GetBatteryStats();
-    auto totalConsumption = BatteryStatsEntity::GetTotalPowerMah();
+    BatteryStatsInfoList statsInfoList;
+    double totalConsumption = StatsUtils::DEFAULT_VALUE;
+    {
+        // Snapshot the stats list and the total consumption in one critical section, so that the
+        // numerator and the denominator always come from the same ComputePower generation.
+        std::lock_guard lock(mutex_);
+        statsInfoList = BatteryStatsEntity::GetStatsInfoList();
+        totalConsumption = BatteryStatsEntity::GetTotalPowerMah();
+    }
     if (totalConsumption <= StatsUtils::DEFAULT_VALUE) {
         STATS_HILOGW(COMP_SVC, "No consumption got, return 0");
         return appStatsPercent;
@@ -769,8 +776,15 @@ double BatteryStatsCore::GetPartStatsMah(const BatteryStatsInfo::ConsumptionType
 double BatteryStatsCore::GetPartStatsPercent(const BatteryStatsInfo::ConsumptionType& type)
 {
     double partStatsPercent = StatsUtils::DEFAULT_VALUE;
-    auto statsInfoList = GetBatteryStats();
-    auto totalConsumption = BatteryStatsEntity::GetTotalPowerMah();
+    BatteryStatsInfoList statsInfoList;
+    double totalConsumption = StatsUtils::DEFAULT_VALUE;
+    {
+        // Snapshot the stats list and the total consumption in one critical section, so that the
+        // numerator and the denominator always come from the same ComputePower generation.
+        std::lock_guard lock(mutex_);
+        statsInfoList = BatteryStatsEntity::GetStatsInfoList();
+        totalConsumption = BatteryStatsEntity::GetTotalPowerMah();
+    }
     for (auto iter = statsInfoList.begin(); iter != statsInfoList.end(); iter++) {
         if ((*iter)->GetConsumptionType() == type && totalConsumption != StatsUtils::DEFAULT_VALUE) {
             partStatsPercent = (*iter)->GetPower() / totalConsumption;

@@ -117,11 +117,14 @@ void PhoneEntity::Calculate(int32_t uid)
         phoneDataPowerMah += phoneDataLevelPowerMah;
     }
     phonePowerMah_ = phoneOnPowerMah + phoneDataPowerMah;
-    totalPowerMah_ += phonePowerMah_;
+    {
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
+        totalPowerMah_ += phonePowerMah_;
+    }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();
     statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_PHONE);
     statsInfo->SetPower(phonePowerMah_);
-    statsInfoList_.push_back(statsInfo);
+    UpdateStatsInfoList(statsInfo);
     STATS_HILOGD(COMP_SVC, "Calculate phone active power consumption: %{public}lfmAh", phonePowerMah_);
 }
 

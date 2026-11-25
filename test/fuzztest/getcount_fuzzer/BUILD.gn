@@ -46,6 +46,7 @@ ohos_fuzztest("GetCountFuzzTest") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "hilog:libhilog",
     "c_utils:utils",
   ]

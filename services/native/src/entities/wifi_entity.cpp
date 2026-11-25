@@ -44,11 +44,14 @@ void WifiEntity::Calculate(int32_t uid)
     auto wifiScanPowerMah = wifiScanAverageMa * wifiScanCount;
 
     wifiPowerMah_ = wifiOnPowerMah + wifiScanPowerMah;
-    totalPowerMah_ += wifiPowerMah_;
+    {
+        std::lock_guard<std::mutex> statsLock(statsMutex_);
+        totalPowerMah_ += wifiPowerMah_;
+    }
     std::shared_ptr<BatteryStatsInfo> statsInfo = std::make_shared<BatteryStatsInfo>();
     statsInfo->SetConsumptioType(BatteryStatsInfo::CONSUMPTION_TYPE_WIFI);
     statsInfo->SetPower(wifiPowerMah_);
-    statsInfoList_.push_back(statsInfo);
+    UpdateStatsInfoList(statsInfo);
     STATS_HILOGD(COMP_SVC, "Calculate wifi power consumption: %{public}lfmAh", wifiPowerMah_);
 }
 

@@ -32,6 +32,7 @@
         "ability_runtime",
         "battery_manager",
         "bluetooth",
+        "bounds_checking_function",
         "call_manager",
         "common_event_service",
         "config_policy",
@@ -96,14 +97,18 @@
         "//base/powermgr/battery_statistics/test:unittest",
         "//base/powermgr/battery_statistics/test:fuzztest",
         "//base/powermgr/battery_statistics/test:systemtest",
+
         "//base/powermgr/battery_statistics/test/fuzztest/dump_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/onremotedied_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/isvalidjsonstring_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/isvalidjsonstringandnoempty_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/isvalidjsonnumber_fuzzer:fuzztest",
+
         "//base/powermgr/battery_statistics/test/fuzztest/batterystatsclient_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/getcount_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/reset_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/BatteryStatsApi_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/BatteryStatsIpc_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/detector_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/subscriber_event_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/batterystatsserviceipc_fuzzer:fuzztest",
@@ -117,6 +122,7 @@
         "//base/powermgr/battery_statistics/test/fuzztest/entity_query_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/entity_timer_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/parser_array_matrix_fuzzer:fuzztest"
+
       ]
     }
   }

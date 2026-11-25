@@ -25,7 +25,7 @@ void AsyncCallbackInfo::CallFunction(napi_env& env, napi_value results)
 {
     napi_value callback = nullptr;
     if (napi_ok != napi_get_reference_value(env, callbackRef_, &callback)) {
-        STATS_HILOGW(COMP_FWK, "Failed to get a callback reference");
+        STATS_HILOGW(COMP_FWK, "Failed to get a callback reference.");
         return;
     }
     const int32_t maxArgc = 2;

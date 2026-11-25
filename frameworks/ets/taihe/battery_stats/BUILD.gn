@@ -58,6 +58,9 @@ taihe_shared_library("batterystats_taihe_native") {
     "hilog:libhilog",
     "ipc:ipc_core",
   ]
+
+  version_script = "libbatterystats_taihe_native.map"
+
   subsystem_name = "powermgr"
   part_name = "$batterystats_part_name"
 }
