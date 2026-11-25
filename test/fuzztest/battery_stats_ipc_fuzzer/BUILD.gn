@@ -16,7 +16,7 @@ import("../../../batterystats.gni")
 
 module_output_path = "battery_statistics/battery_statistics"
 
-ohos_fuzztest("BatteryStatsIpcFuzzTest") {
+ohos_fuzztest("BatteryStatsIpcExtFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file =
       "${batterystats_root_path}/test/fuzztest/battery_stats_ipc_fuzzer"
@@ -58,5 +58,5 @@ ohos_fuzztest("BatteryStatsIpcFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":BatteryStatsIpcFuzzTest" ]
+  deps = [ ":BatteryStatsIpcExtFuzzTest" ]
 }
