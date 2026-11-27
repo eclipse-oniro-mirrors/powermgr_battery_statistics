@@ -108,7 +108,20 @@
         "//base/powermgr/battery_statistics/test/fuzztest/getcount_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/reset_fuzzer:fuzztest",
         "//base/powermgr/battery_statistics/test/fuzztest/BatteryStatsApi_fuzzer:fuzztest",
-        "//base/powermgr/battery_statistics/test/fuzztest/BatteryStatsIpc_fuzzer:fuzztest"
+        "//base/powermgr/battery_statistics/test/fuzztest/BatteryStatsIpc_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/detector_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/subscriber_event_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/batterystatsserviceipc_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/cputimereader_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/listener_connectivity_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/listener_device_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/listener_work_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/listener_debug_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/statscore_jsonstate_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/entity_power_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/entity_query_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/entity_timer_fuzzer:fuzztest",
+        "//base/powermgr/battery_statistics/test/fuzztest/parser_array_matrix_fuzzer:fuzztest"
 
       ]
     }
